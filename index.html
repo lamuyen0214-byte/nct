@@ -14,17 +14,19 @@
         .table-input { width: 100%; border: 1px solid #dee2e6; padding: 5px; border-radius: 4px; }
         .table-input:focus { border-color: #0d6efd; outline: none; }
         .nav-tabs .nav-link { font-weight: bold; }
-        #appContainer, #loginContainer { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container mt-5">
-    <!-- KHUNG ĐĂNG NHẬP (Hiển thị khi chưa đăng nhập) -->
+    <!-- KHUNG ĐĂNG NHẬP -->
     <div id="loginContainer" class="row justify-content-center">
-        <div class="col-md-5">
+        <div class="col-md-6">
             <div class="card shadow p-4 text-center">
                 <h3 class="mb-3">Đăng nhập hệ thống</h3>
+                <div id="configWarning" class="alert alert-warning text-start" style="display: none;">
+                    <strong>Cảnh báo:</strong> Bạn chưa thay thế <code>SUPABASE_URL</code> và <code>SUPABASE_KEY</code> thật ở đoạn mã dưới cùng trong file này!
+                </div>
                 <p class="text-muted">Vui lòng đăng nhập bằng tài khoản Gmail của bạn để tiếp tục.</p>
                 <button class="btn btn-danger btn-lg w-100" onclick="loginWithGoogle()">
                     Đăng nhập bằng Gmail
@@ -33,8 +35,8 @@
         </div>
     </div>
 
-    <!-- KHUNG QUẢN TRỊ CHÍNH (Hiển thị sau khi đã đăng nhập) -->
-    <div id="appContainer">
+    <!-- KHUNG QUẢN TRỊ CHÍNH (Ẩn khi chưa đăng nhập) -->
+    <div id="appContainer" style="display: none;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Hệ thống Quản trị Ngân hàng Câu hỏi</h2>
             <button class="btn btn-outline-secondary btn-sm" onclick="logout()">Đăng xuất</button>
@@ -88,34 +90,55 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // --- CẤU HÌNH SUPABASE (THAY THÔNG TIN CỦA BẠN VÀO ĐÂY) ---
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
-    const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // --- CẤU HÌNH SUPABASE (HÃY DÁN THÔNG TIN THẬT CỦA BẠN VÀO ĐÂY) ---
+    const SUPABASE_URL = 'https://kqgcqluayinvfzkzykgv.supabase.co'; 
+    const SUPABASE_KEY = 'sb_publishable__pj-PNYpSFUKaQkZXFzTpA_Qc7ckLHv';
+
+    let supabase = null;
+    try {
+        if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_KEY !== 'YOUR_SUPABASE_KEY') {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        }
+    } catch (e) {
+        console.error("Lỗi khởi tạo Supabase:", e);
+    }
 
     // --- KIỂM TRA TRẠNG THÁI ĐĂNG NHẬP KHI MỞ TRANG ---
     document.addEventListener("DOMContentLoaded", async function() {
-        const { data: { session } } = await supabase.auth.getSession();
-        handleAuthSession(session);
+        if (!supabase) {
+            document.getElementById('configWarning').style.display = 'block';
+            return;
+        }
 
-        supabase.auth.onAuthStateChange((event, session) => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
             handleAuthSession(session);
-        });
+
+            supabase.auth.onAuthStateChange((event, session) => {
+                handleAuthSession(session);
+            });
+        } catch (err) {
+            console.error("Lỗi xác thực:", err);
+        }
     });
 
     function handleAuthSession(session) {
         if (session) {
             document.getElementById('loginContainer').style.display = 'none';
             document.getElementById('appContainer').style.display = 'block';
-            fetchQuestions(); // Tải dữ liệu khi đã đăng nhập
+            fetchQuestions(); 
         } else {
-            document.getElementById('loginContainer').style.display = 'flex';
+            document.getElementById('loginContainer').style.display = 'block';
             document.getElementById('appContainer').style.display = 'none';
         }
     }
 
     // --- HÀM ĐĂNG NHẬP / ĐĂNG XUẤT ---
     async function loginWithGoogle() {
+        if (!supabase) {
+            alert("Vui lòng điền đúng SUPABASE_URL và SUPABASE_KEY trong file code trước!");
+            return;
+        }
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -126,11 +149,13 @@
     }
 
     async function logout() {
-        await supabase.auth.signOut();
+        if (supabase) await supabase.auth.signOut();
+        location.reload();
     }
 
     // --- TẢI DỮ LIỆU CÂU HỎI ---
     async function fetchQuestions() {
+        if (!supabase) return;
         const { data, error } = await supabase.from('questions').select('*');
         if (error) {
             document.getElementById('tableContainer').innerHTML = "<div class='alert alert-danger'>Lỗi tải dữ liệu: " + error.message + "</div>";
@@ -207,6 +232,7 @@
 
     // --- KẾT CHUYỂN VÀO DATABASE ---
     async function saveToBank() {
+        if (!supabase) return;
         const rows = document.querySelectorAll('#questionTableBody tr');
         const data = Array.from(rows).map(row => {
             const inputs = row.querySelectorAll('input');
