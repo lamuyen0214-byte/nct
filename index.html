@@ -218,14 +218,19 @@
                 btnS.className = "px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm";
                 document.getElementById('view-student').classList.remove('hidden');
             } 
-            else if (role === 'teacher') {
+           else if (role === 'teacher') {
                 btnT.className = "px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm";
                 
                 if (!currentUser) {
                     document.getElementById('view-login').classList.remove('hidden');
                 } else if (userRole === 'pending') {
                     document.getElementById('view-pending').classList.remove('hidden');
-                } else if (userRole === 'teacher' || userRole === 'admin') {
+                } else if (userRole === 'admin') {
+                    // Nếu là Admin -> Tự động mở thẳng vào tab Quản trị User luôn
+                    document.getElementById('view-teacher').classList.remove('hidden');
+                    switchTeacherTab('admin');
+                } else if (userRole === 'teacher') {
+                    // Nếu là Giáo viên thường -> Vào tab Quản lý phòng thi
                     document.getElementById('view-teacher').classList.remove('hidden');
                     switchTeacherTab('rooms');
                 }
