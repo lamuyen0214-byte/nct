@@ -14,6 +14,11 @@
         .table-input { width: 100%; border: 1px solid #dee2e6; padding: 5px; border-radius: 4px; }
         .table-input:focus { border-color: #0d6efd; outline: none; }
         .nav-tabs .nav-link { font-weight: bold; }
+        .login-card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: #6c757d; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #dee2e6; }
+        .divider::before { margin-right: .75em; }
+        .divider::after { margin-left: .75em; }
     </style>
 </head>
 <body>
@@ -21,15 +26,43 @@
 <div class="container mt-5">
     <!-- KHUNG ĐĂNG NHẬP -->
     <div id="loginContainer" class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow p-4 text-center">
-                <h3 class="mb-3">Đăng nhập hệ thống</h3>
-                <div id="configWarning" class="alert alert-warning text-start" style="display: none;">
-                    <strong>Cảnh báo:</strong> Bạn chưa thay thế <code>SUPABASE_URL</code> và <code>SUPABASE_KEY</code> thật ở đoạn mã dưới cùng trong file này!
+        <div class="col-md-5">
+            <div class="card login-card p-4">
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold text-primary">Đăng nhập hệ thống</h3>
+                    <p class="text-muted small">Quản lý ngân hàng câu hỏi trắc nghiệm</p>
                 </div>
-                <p class="text-muted">Vui lòng đăng nhập bằng tài khoản Gmail của bạn để tiếp tục.</p>
-                <button class="btn btn-danger btn-lg w-100" onclick="loginWithGoogle()">
-                    Đăng nhập bằng Gmail
+
+                <div id="configWarning" class="alert alert-warning py-2 small" style="display: none;">
+                    <strong>Cảnh báo:</strong> Chưa cấu hình <code>SUPABASE_URL</code> và <code>SUPABASE_KEY</code>!
+                </div>
+
+                <!-- Form đăng nhập bằng Email / Mật khẩu -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Địa chỉ Gmail / Email</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="name@example.com">
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Mật khẩu</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Mật khẩu của bạn">
+                </div>
+
+                <button class="btn btn-primary w-100 py-2 fw-semibold mb-2" onclick="loginWithEmail()">
+                    Đăng nhập thành viên
+                </button>
+
+                <div class="divider">Hoặc</div>
+
+                <!-- Đăng nhập bằng Google OAuth -->
+                <button class="btn btn-outline-danger w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" onclick="loginWithGoogle()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    </svg>
+                    Đăng nhập bằng tài khoản Gmail
                 </button>
             </div>
         </div>
@@ -51,7 +84,7 @@
             </li>
         </ul>
 
-        <div class="tab-content bg-white p-4 border border-top-0 rounded-bottom">
+        <div class="tab-content bg-white p-4 border border-top-0 rounded-bottom shadow-sm">
             <!-- Tab 1: Ngân hàng câu hỏi -->
             <div class="tab-pane fade show active" id="bank">
                 <h4>Danh sách câu hỏi hiện có</h4>
@@ -128,12 +161,38 @@
             document.getElementById('appContainer').style.display = 'block';
             fetchQuestions(); 
         } else {
-            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('loginContainer').style.display = 'flex';
             document.getElementById('appContainer').style.display = 'none';
         }
     }
 
-    // --- HÀM ĐĂNG NHẬP / ĐĂNG XUẤT ---
+    // --- HÀM ĐĂNG NHẬP THÀNH VIÊN (EMAIL & MẬT KHẨU) ---
+    async function loginWithEmail() {
+        if (!supabase) {
+            alert("Vui lòng điền đúng SUPABASE_URL và SUPABASE_KEY trong file code trước!");
+            return;
+        }
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        if (!email || !password) {
+            alert("Vui lòng nhập đầy đủ email và mật khẩu!");
+            return;
+        }
+
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password,
+        });
+
+        if (error) {
+            alert("Đăng nhập thất bại: " + error.message);
+        } else {
+            // Đăng nhập thành công, session thay đổi sẽ tự động chuyển giao diện
+        }
+    }
+
+    // --- HÀM ĐĂNG NHẬP BẰNG GMAIL (GOOGLE OAUTH) ---
     async function loginWithGoogle() {
         if (!supabase) {
             alert("Vui lòng điền đúng SUPABASE_URL và SUPABASE_KEY trong file code trước!");
@@ -145,7 +204,7 @@
                 redirectTo: window.location.href
             }
         });
-        if (error) alert("Lỗi đăng nhập: " + error.message);
+        if (error) alert("Lỗi đăng nhập Google: " + error.message);
     }
 
     async function logout() {
