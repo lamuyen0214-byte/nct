@@ -4,53 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống Quản lý Câu hỏi</title>
-    <!-- Bootstrap 5 CSS -->
+    <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Thư viện Mammoth đọc Word & Supabase JS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Thư viện Mammoth & Supabase -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background-color: #f4f6f9; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-        .table-input { width: 100%; border: 1px solid #dee2e6; padding: 6px; border-radius: 4px; }
-        .table-input:focus { border-color: #0d6efd; outline: none; background-color: #f8f9fa; }
-        .login-card { border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: #6c757d; font-size: 0.9rem; }
+        :root { --bs-body-bg: #f4f6f9; }
+        body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+        .login-card { border: none; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        .divider { display: flex; align-items: center; text-align: center; margin: 20px 0; color: #6c757d; font-size: 0.85rem; }
         .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #dee2e6; }
         .divider::before { margin-right: .75em; }
         .divider::after { margin-left: .75em; }
+        
+        /* Dropzone Upload Style */
+        .upload-dropzone {
+            border: 2px dashed #0d6efd;
+            border-radius: 12px;
+            background-color: #ffffff;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .upload-dropzone:hover {
+            background-color: #f0f7ff;
+            border-color: #0b5ed7;
+        }
+
+        .table-input { width: 100%; border: 1px solid #ced4da; padding: 6px 10px; border-radius: 6px; font-size: 0.9rem; }
+        .table-input:focus { border-color: #0d6efd; outline: none; box-shadow: 0 0 0 0.2rem rgba(13,110,253,.15); }
+        .card-custom { border: none; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
     </style>
 </head>
 <body>
 
-<div class="container mt-5">
+<div class="container py-4">
     <!-- KHUNG ĐĂNG NHẬP -->
-    <div id="loginContainer" class="row justify-content-center">
-        <div class="col-md-5">
+    <div id="loginContainer" class="row justify-content-center my-5">
+        <div class="col-md-5 col-lg-4">
             <div class="card login-card p-4 bg-white">
                 <div class="text-center mb-4">
-                    <h3 class="fw-bold text-primary">Đăng nhập hệ thống</h3>
+                    <div class="bg-primary-subtle text-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 56px; height: 56px;">
+                        <i class="bi bi-shield-lock-fill fs-3"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Đăng nhập hệ thống</h4>
                     <p class="text-muted small mb-0">Quản lý ngân hàng câu hỏi trắc nghiệm</p>
                 </div>
 
                 <div id="demoNotice" class="alert alert-info py-2 small text-center" style="display: none;">
-                    Chưa kết nối Supabase: Hệ thống sẽ chạy ở <strong>Chế độ dùng thử</strong>.
+                    <i class="bi bi-info-circle me-1"></i> Chưa kết nối Supabase: Hệ thống chạy ở <strong>Chế độ dùng thử</strong>.
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-semibold small">Địa chỉ Gmail / Email</label>
+                    <label class="form-label fw-semibold small">Địa chỉ Email / Gmail</label>
                     <input type="email" id="loginEmail" class="form-control" placeholder="name@example.com">
                 </div>
                 
                 <div class="mb-3">
                     <label class="form-label fw-semibold small">Mật khẩu</label>
-                    <input type="password" id="loginPassword" class="form-control" placeholder="Mật khẩu của bạn">
+                    <input type="password" id="loginPassword" class="form-control" placeholder="••••••••">
                 </div>
 
                 <button type="button" class="btn btn-primary w-100 py-2 fw-semibold mb-2" onclick="loginWithEmail()">
-                    Đăng nhập thành viên
+                    <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập thành viên
                 </button>
 
-                <div class="divider">Hoặc</div>
+                <div class="divider">HOẶC</div>
 
                 <button type="button" class="btn btn-outline-danger w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2" onclick="loginWithGoogle()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 48 48">
@@ -65,54 +87,101 @@
         </div>
     </div>
 
-    <!-- KHUNG QUẢN TRỊ CHÍNH (Ẩn mặc định) -->
+    <!-- KHUNG QUẢN TRỊ CHÍNH -->
     <div id="appContainer" style="display: none;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Hệ thống Quản trị Ngân hàng Câu hỏi</h2>
-            <div>
-                <span id="userStatus" class="badge bg-secondary me-2"></span>
-                <button class="btn btn-outline-secondary btn-sm" onclick="logout()">Đăng xuất</button>
+        <!-- Header Nav -->
+        <div class="card card-custom p-3 mb-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-journal-check text-primary fs-3"></i>
+                    <h4 class="fw-bold mb-0 text-dark">Hệ thống Quản trị Ngân hàng Câu hỏi</h4>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span id="userStatus" class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fs-6"></span>
+                    <button class="btn btn-outline-danger btn-sm px-3 rounded-pill" onclick="logout()">
+                        <i class="bi bi-signout me-1"></i> Đăng xuất
+                    </button>
+                </div>
             </div>
         </div>
-        
-        <ul class="nav nav-tabs" id="mainTab" role="tablist">
+
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills mb-3 gap-2" id="mainTab" role="tablist">
             <li class="nav-item">
-                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#bank" type="button">Ngân hàng câu hỏi</button>
+                <button class="nav-link active px-4 py-2 fw-semibold rounded-pill" data-bs-toggle="tab" data-bs-target="#bank" type="button">
+                    <i class="bi bi-database me-1"></i> Ngân hàng câu hỏi
+                </button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#import" type="button">Nhập từ Word</button>
+                <button class="nav-link px-4 py-2 fw-semibold rounded-pill" data-bs-toggle="tab" data-bs-target="#import" type="button">
+                    <i class="bi bi-file-earmark-word me-1"></i> Nhập từ Word (.docx)
+                </button>
             </li>
         </ul>
 
-        <div class="tab-content bg-white p-4 border border-top-0 rounded-bottom shadow-sm">
+        <!-- Tab Content -->
+        <div class="tab-content">
             <!-- Tab 1: Ngân hàng câu hỏi -->
             <div class="tab-pane fade show active" id="bank">
-                <h4 class="mb-3">Danh sách câu hỏi hiện có</h4>
-                <div id="tableContainer">Đang tải dữ liệu...</div>
+                <div class="card card-custom p-4 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">Danh sách câu hỏi hiện có</h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="fetchQuestions()">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Làm mới
+                        </button>
+                    </div>
+                    <div id="tableContainer">Đang tải dữ liệu...</div>
+                </div>
             </div>
 
             <!-- Tab 2: Nhập từ Word -->
             <div class="tab-pane fade" id="import">
-                <h4 class="mb-3">Nhập câu hỏi từ File Word (.docx)</h4>
-                <div class="mb-3">
-                    <input type="file" id="wordFile" class="form-control" accept=".docx">
+                <!-- Khu vực Upload File -->
+                <div class="card card-custom p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3">Nhập câu hỏi từ File Word (.docx)</h5>
+                    
+                    <div class="upload-dropzone mb-3" onclick="document.getElementById('wordFile').click()">
+                        <i class="bi bi-cloud-arrow-up text-primary" style="font-size: 3rem;"></i>
+                        <h6 class="fw-bold mt-2">Nhấn vào đây để chọn file Word (.docx)</h6>
+                        <p class="text-muted small mb-0">Hỗ trợ định dạng file Microsoft Word tiêu chuẩn</p>
+                        <input type="file" id="wordFile" class="d-none" accept=".docx">
+                    </div>
+
+                    <!-- Hướng dẫn định dạng -->
+                    <div class="alert alert-light border rounded-3 p-3 small mb-0">
+                        <div class="fw-bold text-dark mb-1"><i class="bi bi-info-circle text-primary me-1"></i> Định dạng mẫu trong file Word:</div>
+                        <div class="text-secondary">
+                            <code>Câu 1: Thủ đô của Việt Nam là gì?</code><br>
+                            <code>A. TP. Hồ Chí Minh</code> | <code>B. Hà Nội</code> | <code>C. Đà Nẵng</code> | <code>D. Cần Thơ</code>
+                        </div>
+                    </div>
                 </div>
-                <div id="editorSection" style="display: none;">
-                    <div class="alert alert-warning py-2 small">Vui lòng rà soát và chỉnh sửa nội dung trong bảng bên dưới trước khi bấm "Kết chuyển".</div>
-                    <div class="table-responsive mb-3">
-                        <table class="table table-bordered align-middle">
-                            <thead class="table-dark text-center">
+
+                <!-- Bảng duyệt & sửa dữ liệu trước khi lưu -->
+                <div id="editorSection" class="card card-custom p-4 bg-white" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1">Kiểm tra & Kết chuyển dữ liệu</h5>
+                            <span class="text-muted small">Rà soát lại nội dung trước khi cập nhật vào hệ thống.</span>
+                        </div>
+                        <button class="btn btn-success fw-bold px-4 rounded-pill" onclick="saveToBank()">
+                            <i class="bi bi-check-circle me-1"></i> Kết chuyển vào Database
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle border">
+                            <thead class="table-light">
                                 <tr>
-                                    <th style="width: 35%;">Câu hỏi</th>
+                                    <th style="width: 32%;">Câu hỏi</th>
                                     <th>A</th><th>B</th><th>C</th><th>D</th>
-                                    <th style="width: 10%;">Đ.Án</th>
-                                    <th style="width: 5%;">Xóa</th>
+                                    <th style="width: 80px;" class="text-center">Đáp án</th>
+                                    <th style="width: 60px;" class="text-center">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody id="questionTableBody"></tbody>
                         </table>
                     </div>
-                    <button class="btn btn-success btn-lg w-100 fw-bold" onclick="saveToBank()">Kết chuyển vào Database</button>
                 </div>
             </div>
         </div>
@@ -122,20 +191,18 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // --- CẤU HÌNH SUPABASE (Thay thông tin thật của bạn tại đây) ---
     const SUPABASE_URL = 'https://kqgcqluayinvfzkzykgv.supabase.co'; 
     const SUPABASE_KEY = 'sb_publishable__pj-PNYpSFUKaQkZXFzTpA_Qc7ckLHv';
 
     let supabaseClient = null;
-    let localQuestions = []; // Bộ lưu trữ câu hỏi tạm thời cho Chế độ dùng thử
+    let localQuestions = []; 
 
-    // Khởi tạo Supabase an toàn
     try {
         if (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_KEY !== 'YOUR_SUPABASE_KEY' && window.supabase) {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         }
     } catch (e) {
-        console.warn("Chưa cấu hình Supabase hợp lệ, hệ thống sẽ chạy ở Chế độ dùng thử.");
+        console.warn("Chạy ở Chế độ dùng thử.");
     }
 
     document.addEventListener("DOMContentLoaded", async function() {
@@ -150,7 +217,7 @@
                     if (session) handleAuthSuccess(session.user.email);
                 });
             } catch (err) {
-                console.error("Lỗi kiểm tra phiên làm việc:", err);
+                console.error("Lỗi xác thực:", err);
             }
         }
     });
@@ -158,17 +225,15 @@
     function handleAuthSuccess(email) {
         document.getElementById('loginContainer').style.display = 'none';
         document.getElementById('appContainer').style.display = 'block';
-        document.getElementById('userStatus').innerText = email || 'Thành viên';
+        document.getElementById('userStatus').innerHTML = `<i class="bi bi-person-circle me-1"></i> ${email || 'Thành viên'}`;
         fetchQuestions();
     }
 
-    // --- ĐĂNG NHẬP THÀNH VIÊN ---
     async function loginWithEmail() {
         const email = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value.trim();
 
         if (!supabaseClient) {
-            // Chế độ Demo: Cho phép đăng nhập ngay để trải nghiệm giao diện
             handleAuthSuccess(email || "demo_user@gmail.com");
             return;
         }
@@ -179,26 +244,20 @@
         }
 
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) {
-            alert("Đăng nhập thất bại: " + error.message);
-        } else {
-            handleAuthSuccess(data.user.email);
-        }
+        if (error) alert("Đăng nhập thất bại: " + error.message);
+        else handleAuthSuccess(data.user.email);
     }
 
-    // --- ĐĂNG NHẬP BẰNG GMAIL ---
     async function loginWithGoogle() {
         if (!supabaseClient) {
-            // Chế độ Demo: Cho phép đăng nhập ngay
             handleAuthSuccess("google_user@gmail.com");
             return;
         }
-
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: { redirectTo: window.location.href }
         });
-        if (error) alert("Lỗi đăng nhập Google: " + error.message);
+        if (error) alert("Lỗi Google Auth: " + error.message);
     }
 
     function logout() {
@@ -206,16 +265,14 @@
         location.reload();
     }
 
-    // --- TẢI DỮ LIỆU CÂU HỎI ---
     async function fetchQuestions() {
         if (!supabaseClient) {
             renderBankTable(localQuestions);
             return;
         }
-
         const { data, error } = await supabaseClient.from('questions').select('*');
         if (error) {
-            document.getElementById('tableContainer').innerHTML = "<div class='alert alert-danger'>Lỗi tải dữ liệu: " + error.message + "</div>";
+            document.getElementById('tableContainer').innerHTML = `<div class='alert alert-danger mb-0'>Lỗi tải dữ liệu: ${error.message}</div>`;
             return;
         }
         renderBankTable(data || []);
@@ -223,25 +280,25 @@
 
     function renderBankTable(data) {
         if (!data || data.length === 0) {
-            document.getElementById('tableContainer').innerHTML = "<p class='text-muted'>Chưa có câu hỏi nào trong cơ sở dữ liệu.</p>";
+            document.getElementById('tableContainer').innerHTML = "<div class='text-center py-4 text-muted'><i class='bi bi-inbox fs-1 d-block mb-2'></i>Chưa có câu hỏi nào trong cơ sở dữ liệu.</div>";
             return;
         }
-        let html = '<table class="table table-striped table-bordered align-middle"><thead class="table-light"><tr><th>Câu hỏi</th><th>A</th><th>B</th><th>C</th><th>D</th><th class="text-center">Đáp án</th></tr></thead><tbody>';
+        let html = '<div class="table-responsive"><table class="table table-hover align-middle border"><thead class="table-light"><tr><th>Câu hỏi</th><th>A</th><th>B</th><th>C</th><th>D</th><th class="text-center">Đáp án</th></tr></thead><tbody>';
         data.forEach(q => {
             html += `<tr>
-                <td>${q.cau_hoi || ''}</td>
+                <td class="fw-semibold">${q.cau_hoi || ''}</td>
                 <td>${q.da_a || ''}</td>
                 <td>${q.da_b || ''}</td>
                 <td>${q.da_c || ''}</td>
                 <td>${q.da_d || ''}</td>
-                <td class="text-center"><span class="badge bg-success">${q.dap_an_dung || ''}</span></td>
+                <td class="text-center"><span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">${q.dap_an_dung || ''}</span></td>
             </tr>`;
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         document.getElementById('tableContainer').innerHTML = html;
     }
 
-    // --- XỬ LÝ NHẬP FILE WORD (.DOCX) ---
+    // Xử lý đọc file Word
     document.getElementById('wordFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
@@ -252,13 +309,13 @@
                 .then(res => {
                     const parsedData = parseWordText(res.value);
                     if (parsedData.length === 0) {
-                        alert("Không tìm thấy câu hỏi đúng định dạng! (Cần có từ khóa 'Câu 1:', 'A.', 'B.',...)");
+                        alert("Không bóc tách được câu hỏi! Vui lòng đảm bảo file Word đúng mẫu (Câu 1: ..., A. ..., B. ...)");
                         return;
                     }
                     renderImportTable(parsedData);
                     document.getElementById('editorSection').style.display = 'block';
                 })
-                .catch(err => alert("Lỗi đọc file Word: " + err.message));
+                .catch(err => alert("Lỗi đọc file: " + err.message));
         };
         reader.readAsArrayBuffer(file);
     });
@@ -285,18 +342,17 @@
         tbody.innerHTML = '';
         data.forEach(item => {
             tbody.insertAdjacentHTML('beforeend', `<tr>
-                <td><input class="table-input" value="${item.q}"></td>
+                <td><input class="table-input fw-semibold" value="${item.q}"></td>
                 <td><input class="table-input" value="${item.a}"></td>
                 <td><input class="table-input" value="${item.b}"></td>
                 <td><input class="table-input" value="${item.c}"></td>
                 <td><input class="table-input" value="${item.d}"></td>
-                <td><input class="table-input text-uppercase text-center fw-bold" value="" placeholder="A/B/C/D"></td>
-                <td class="text-center"><button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">Xóa</button></td>
+                <td class="text-center"><input class="table-input text-uppercase text-center fw-bold text-primary" value="" placeholder="A/B/C/D"></td>
+                <td class="text-center"><button class="btn btn-sm btn-outline-danger border-0" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
             </tr>`);
         });
     }
 
-    // --- KẾT CHUYỂN VÀO DATABASE ---
     async function saveToBank() {
         const rows = document.querySelectorAll('#questionTableBody tr');
         const data = Array.from(rows).map(row => {
@@ -312,18 +368,16 @@
         });
 
         if (data.length === 0) {
-            alert("Không có dữ liệu để kết chuyển!");
+            alert("Không có câu hỏi nào để kết chuyển!");
             return;
         }
 
         if (!supabaseClient) {
-            // Lưu tạm vào mảng dữ liệu local khi ở Chế độ dùng thử
             localQuestions = localQuestions.concat(data);
-            alert("Đã kết chuyển " + data.length + " câu hỏi thành công (Chế độ dùng thử)!");
+            alert("Đã kết chuyển thành công " + data.length + " câu hỏi (Chế độ dùng thử)!");
             document.getElementById('editorSection').style.display = 'none';
             document.getElementById('wordFile').value = '';
             
-            // Chuyển về Tab Ngân hàng câu hỏi để xem ngay kết quả
             const bankTab = new bootstrap.Tab(document.querySelector('button[data-bs-target="#bank"]'));
             bankTab.show();
             fetchQuestions();
@@ -332,9 +386,9 @@
 
         const { error } = await supabaseClient.from('questions').insert(data);
         if (error) {
-            alert("Lỗi khi lưu vào Database: " + error.message);
+            alert("Lỗi lưu Database: " + error.message);
         } else {
-            alert("Kết chuyển thành công " + data.length + " câu hỏi vào cơ sở dữ liệu!");
+            alert("Kết chuyển thành công " + data.length + " câu hỏi!");
             document.getElementById('editorSection').style.display = 'none';
             document.getElementById('wordFile').value = '';
             fetchQuestions();
