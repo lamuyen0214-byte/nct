@@ -3,17 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GV NCT PRO ONLINE - Hệ Thống Khảo Thí THCS</title>
+    <title>GV NCT PRO ONLINE - Hệ Thống Khảo Thí THCS & AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Thư viện Mammoth.js để đọc file Word (.docx) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
         .hidden { display: none !important; }
+        /* CSS cho Loading Spinner của AI */
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
@@ -25,7 +27,7 @@
                 <div class="bg-white/15 p-2 rounded-xl backdrop-blur-sm"><i data-lucide="graduation-cap" class="w-7 h-7"></i></div>
                 <div>
                     <h1 class="font-bold text-lg leading-tight">GV NCT PRO ONLINE</h1>
-                    <p class="text-xs text-indigo-200">Hệ thống khảo thí trực tuyến THCS</p>
+                    <p class="text-xs text-indigo-200">Hệ thống khảo thí tích hợp AI</p>
                 </div>
             </div>
             <div class="flex items-center gap-3">
@@ -44,7 +46,7 @@
     <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6">
         <!-- VIEW: HOME -->
         <div id="view-home" class="view-section max-w-3xl mx-auto py-12 text-center">
-            <h2 class="text-3xl font-extrabold text-slate-900 mb-3">Nền Tảng Thi Trực Tuyến & Ôn Tập THCS</h2>
+            <h2 class="text-3xl font-extrabold text-slate-900 mb-3">Nền Tảng Thi Trực Tuyến & Sinh Đề Tự Động</h2>
             <p class="text-slate-500 mb-8">Lựa chọn vai trò để bắt đầu trải nghiệm hệ thống</p>
             <div class="grid sm:grid-cols-2 gap-6">
                 <div onclick="switchRole('student')" class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md cursor-pointer border transition text-left group">
@@ -55,14 +57,13 @@
                 <div onclick="switchRole('teacher')" class="bg-white p-8 rounded-2xl shadow-sm hover:shadow-md cursor-pointer border transition text-left group">
                     <div class="bg-blue-50 text-blue-600 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition"><i data-lucide="shield-check"></i></div>
                     <h3 class="font-bold text-xl mb-1">Dành cho Giáo Viên</h3>
-                    <p class="text-sm text-slate-500">Đăng nhập bằng Gmail để quản lý ngân hàng câu hỏi, tạo phòng và chấm điểm.</p>
+                    <p class="text-sm text-slate-500">Đăng nhập để quản lý ngân hàng câu hỏi, dùng AI tạo đề và chấm điểm.</p>
                 </div>
             </div>
         </div>
 
         <!-- VIEW: HỌC SINH (JOIN & EXAM) -->
         <div id="view-student" class="view-section hidden max-w-xl mx-auto">
-            <!-- Form nhập mã -->
             <div id="student-step-join" class="bg-white p-8 rounded-2xl shadow-sm border space-y-4">
                 <h3 class="text-2xl font-bold text-center mb-2">THAM GIA PHÒNG THI</h3>
                 <div>
@@ -80,7 +81,6 @@
                 <button onclick="verifyJoinCode()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3.5 rounded-xl font-bold transition shadow-sm">VÀO PHÒNG THI</button>
             </div>
 
-            <!-- Màn hình làm bài thi -->
             <div id="student-step-exam" class="hidden space-y-6">
                 <div class="bg-white p-4 rounded-2xl shadow-sm border flex justify-between items-center sticky top-4 z-10">
                     <div>
@@ -96,7 +96,6 @@
                 <button onclick="submitExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-bold text-lg shadow-md transition">NỘP BÀI THI</button>
             </div>
 
-            <!-- Kết quả thi của học sinh -->
             <div id="student-step-result" class="hidden bg-white p-8 rounded-2xl shadow-sm border text-center space-y-4">
                 <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold"><i data-lucide="check" class="w-8 h-8"></i></div>
                 <h3 class="text-2xl font-bold text-slate-800">Nộp bài thành công!</h3>
@@ -111,29 +110,20 @@
             <div class="bg-white p-8 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-slate-100">
                 <h2 class="text-3xl font-bold text-blue-600 text-center mb-2">Đăng nhập hệ thống</h2>
                 <p class="text-sm text-slate-500 text-center mb-8">Quản lý ngân hàng câu hỏi trắc nghiệm</p>
-
                 <div class="space-y-5">
                     <div>
                         <label class="block text-sm font-bold text-slate-800 mb-2">Địa chỉ Gmail / Email</label>
                         <input type="email" id="login-email" placeholder="name@example.com" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
-                    
                     <div>
                         <label class="block text-sm font-bold text-slate-800 mb-2">Mật khẩu</label>
                         <input type="password" id="login-password" placeholder="Mật khẩu của bạn" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
-
-                    <button onclick="loginWithEmail()" class="w-full bg-[#1a73e8] hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition duration-200">
-                        Đăng nhập thành viên
-                    </button>
+                    <button onclick="loginWithEmail()" class="w-full bg-[#1a73e8] hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition duration-200">Đăng nhập thành viên</button>
                 </div>
-
                 <div class="flex items-center my-6">
-                    <hr class="flex-grow border-slate-200">
-                    <span class="px-4 text-sm text-slate-500 bg-white">Hoặc</span>
-                    <hr class="flex-grow border-slate-200">
+                    <hr class="flex-grow border-slate-200"><span class="px-4 text-sm text-slate-500 bg-white">Hoặc</span><hr class="flex-grow border-slate-200">
                 </div>
-
                 <button onclick="loginWithGoogle()" class="w-full bg-white border border-[#ea4335] text-[#ea4335] py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition duration-200">
                     <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     Đăng nhập bằng tài khoản Gmail
@@ -146,7 +136,7 @@
             <div class="bg-amber-50 p-8 rounded-2xl shadow-sm border border-amber-200 text-center">
                 <i data-lucide="clock" class="w-12 h-12 text-amber-600 mx-auto mb-4"></i>
                 <h3 class="text-xl font-bold mb-2 text-amber-800">Tài khoản đang chờ duyệt</h3>
-                <p class="text-sm text-amber-700 mb-6">Tài khoản của bạn đã đăng nhập thành công nhưng chưa được cấp quyền quản lý.</p>
+                <p class="text-sm text-amber-700 mb-6">Vui lòng chờ Quản trị viên cấp quyền để sử dụng hệ thống.</p>
                 <button onclick="handleLogout()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl font-bold transition">Đăng xuất</button>
             </div>
         </div>
@@ -155,9 +145,12 @@
         <div id="view-teacher" class="view-section hidden space-y-6">
             <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
                 <button onclick="switchTeacherTab('rooms')" id="t-tab-rooms" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm">Quản lý Phòng Thi</button>
-                <button onclick="switchTeacherTab('banks')" id="t-tab-banks" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Ngân hàng C.Hỏi (Excel)</button>
+                <button onclick="switchTeacherTab('banks')" id="t-tab-banks" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Nhập Đề (Excel)</button>
                 
-                <button onclick="switchTeacherTab('word')" id="t-tab-word" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 shadow-sm transition flex items-center gap-1"><i data-lucide="file-text" class="w-4 h-4"></i> Nhập Đề Từ Word</button>
+                <!-- NÚT AI SINH ĐỀ -->
+                <button onclick="switchTeacherTab('ai-word')" id="t-tab-ai-word" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition flex items-center gap-1">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-yellow-300"></i> AI Sinh Đề Từ File Word
+                </button>
                 
                 <button onclick="switchTeacherTab('results')" id="t-tab-results" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Kết quả</button>
                 <button onclick="switchTeacherTab('admin')" id="t-tab-admin" class="hidden px-4 py-2 rounded-xl text-sm font-bold bg-red-100 text-red-600 border border-red-200 flex items-center gap-1.5"><i data-lucide="shield" class="w-4 h-4"></i> Quản trị User</button>
@@ -175,7 +168,6 @@
                     </div>
                     <button onclick="createExamRoom()" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">Tạo Phòng Thi</button>
                 </div>
-
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 font-bold text-sm text-slate-700">Danh Sách Phòng Thi Hiện Tại</div>
                     <table class="w-full text-left text-sm">
@@ -187,103 +179,130 @@
                 </div>
             </div>
             
-            <!-- TAB 2: NGÂN HÀNG CÂU HỎI (EXCEL) -->
+            <!-- TAB 2: EXCEL -->
             <div id="teacher-content-banks" class="teacher-tab-content space-y-6 hidden">
                 <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                    <h3 class="font-bold text-lg mb-4 text-slate-900">Tải Lên Ngân Hàng Câu Hỏi (Excel / CSV)</h3>
+                    <h3 class="font-bold text-lg mb-4 text-slate-900">Tải Lên Ngân Hàng Câu Hỏi (Excel)</h3>
                     <div class="grid sm:grid-cols-3 gap-4 mb-4">
                         <input type="text" id="bank-title-input" placeholder="Tên bộ đề (VD: Đại số chương 1)" class="px-4 py-2.5 border rounded-xl text-sm">
                         <input type="text" id="bank-subject-input" placeholder="Môn học (VD: Toán)" class="px-4 py-2.5 border rounded-xl text-sm">
                         <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="px-3 py-2 border rounded-xl text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700">
                     </div>
-                    <p class="text-xs text-slate-500 mb-4">* File Excel chuẩn gồm các cột theo thứ tự: <code class="bg-slate-100 px-1 py-0.5 rounded text-indigo-600">Câu hỏi | Đáp án A | Đáp án B | Đáp án C | Đáp án D | Đáp án đúng (A/B/C/D)</code></p>
                     <button onclick="uploadQuestionBank()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">Tải Lên & Lưu Đề</button>
                 </div>
-
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
                     <div class="p-4 border-b bg-slate-50 font-bold text-sm text-slate-700">Danh Sách Bộ Đề Đã Lưu</div>
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50/50 text-slate-500 border-b">
-                            <tr><th class="p-4">Tên Bộ Đề</th><th class="p-4">Môn Học</th><th class="p-4">Ngày tạo</th><th class="p-4 text-right">Thao tác</th></tr>
+                            <tr><th class="p-4">Tên Bộ Đề</th><th class="p-4">Môn Học</th><th class="p-4 text-right">Thao tác</th></tr>
                         </thead>
                         <tbody id="banks-table-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TAB 3: NHẬP ĐỀ TỪ WORD -->
-            <div id="teacher-content-word" class="teacher-tab-content space-y-6 hidden">
-                <div class="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm">
-                    <h3 class="font-bold text-lg mb-2 text-blue-700 flex items-center gap-2"><i data-lucide="file-text"></i> Tự Động Sinh Đề Từ File Word (.docx)</h3>
-                    <p class="text-sm text-slate-600 mb-6">Hệ thống có khả năng bỏ qua tiêu đề rác, lời dẫn và các câu tự luận. Chỉ bóc tách những khối text có dạng "Câu X" và chứa đủ 4 phương án kèm đáp án đúng.</p>
-                    
-                    <div class="grid sm:grid-cols-3 gap-4 mb-4">
-                        <input type="text" id="word-title-input" placeholder="Tên bộ đề mới (VD: Kiểm tra 15p)" class="px-4 py-2.5 border rounded-xl text-sm">
-                        <input type="text" id="word-subject-input" placeholder="Môn học (VD: Vật Lý)" class="px-4 py-2.5 border rounded-xl text-sm">
-                        <input type="file" id="word-file-input" accept=".docx" class="px-3 py-2 border rounded-xl text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
-                    </div>
-                    
-                    <div class="bg-slate-50 p-4 rounded-xl border mb-4">
-                        <h4 class="font-semibold text-sm mb-2 text-slate-700">Định dạng file Word yêu cầu:</h4>
-                        <pre class="text-xs text-slate-600 font-mono">Câu 1: Nội dung câu hỏi ở đây...
-A. Đáp án thứ nhất
-B. Đáp án thứ hai
-C. Đáp án thứ ba
-D. Đáp án thứ tư
-Đáp án: A</pre>
+            <!-- TAB 3: AI SINH ĐỀ (GIAO DIỆN TÙY CHỌN API KEY) -->
+            <div id="teacher-content-ai-word" class="teacher-tab-content space-y-6 hidden">
+                
+                <!-- BƯỚC 1: CẤU HÌNH AI & CHỌN FILE -->
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-200 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="bg-blue-600 text-white p-2 rounded-lg"><i data-lucide="bot"></i></div>
+                        <div>
+                            <h3 class="font-bold text-lg text-blue-900">Trợ lý AI - Tự động sinh câu hỏi từ Đề cương</h3>
+                            <p class="text-sm text-blue-700">Tải lên file Word lý thuyết hoặc bài giảng, AI sẽ đọc hiểu và chế tác câu hỏi trắc nghiệm.</p>
+                        </div>
                     </div>
 
-                    <button onclick="uploadWordBank()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">Xử Lý Word & Lưu Ngân Hàng Đề</button>
+                    <!-- KHU VỰC CẤU HÌNH API KEY (Thay vì sửa trong code) -->
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Chọn Mô hình AI</label>
+                            <select id="ai-provider" class="w-full px-4 py-2 border rounded-lg text-sm font-semibold">
+                                <option value="gemini">Google Gemini 1.5 Flash (Khuyên dùng)</option>
+                                <option value="openai">OpenAI (ChatGPT 4o-mini)</option>
+                            </select>
+                        </div>
+                        <div class="flex-[2]">
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Mã API Key (Bắt đầu bằng AQ..., AIza..., hoặc sk-...)</label>
+                            <input type="password" id="ai-api-key" placeholder="Nhập API Key của bạn vào đây" class="w-full px-4 py-2 border rounded-lg text-sm">
+                        </div>
+                    </div>
+                    
+                    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                        <input type="text" id="ai-title-input" placeholder="Tên bộ đề (VD: Ôn tập Lý)" class="px-4 py-2.5 border rounded-xl text-sm bg-white shadow-sm">
+                        <input type="text" id="ai-subject-input" placeholder="Môn học (VD: Vật Lý)" class="px-4 py-2.5 border rounded-xl text-sm bg-white shadow-sm">
+                        <input type="number" id="ai-quantity-input" placeholder="Số lượng câu (VD: 10)" value="10" class="px-4 py-2.5 border rounded-xl text-sm bg-white shadow-sm">
+                        <input type="file" id="ai-word-file" accept=".docx" class="px-3 py-2 border rounded-xl text-sm bg-white shadow-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-700">
+                    </div>
+
+                    <button onclick="processAIWordFile()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold text-sm transition shadow-md flex justify-center items-center gap-2">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i> Bắt đầu Phân Tích & Sinh Đề
+                    </button>
+                </div>
+
+                <!-- KHU VỰC LOADING TRONG LÚC AI CHẠY -->
+                <div id="ai-loading" class="hidden bg-white p-10 rounded-2xl border shadow-sm text-center">
+                    <div class="loader mb-4"></div>
+                    <h3 class="font-bold text-lg text-blue-600">Trợ lý AI đang làm việc...</h3>
+                    <p class="text-slate-500 text-sm mt-2">Quá trình đọc hiểu đề cương và sáng tác câu hỏi có thể mất từ 10 - 30 giây.<br>Vui lòng không đóng trang web.</p>
+                </div>
+
+                <!-- BƯỚC 2: GIAO DIỆN PREVIEW VÀ CHỈNH SỬA CÂU HỎI -->
+                <div id="ai-preview-section" class="hidden space-y-4">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800">Kiểm tra & Chỉnh sửa Câu hỏi</h3>
+                            <p class="text-sm text-slate-500">Bạn có thể sửa lại nội dung hoặc đáp án trước khi lưu vào CSDL.</p>
+                        </div>
+                        <button onclick="saveAIGeneratedQuestionsToDB()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition shadow-sm flex items-center gap-2">
+                            <i data-lucide="save" class="w-4 h-4"></i> Lưu Tất Cả
+                        </button>
+                    </div>
+
+                    <!-- Container chứa danh sách form câu hỏi -->
+                    <div id="ai-questions-list" class="space-y-4"></div>
+                    
+                    <button onclick="saveAIGeneratedQuestionsToDB()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-4 rounded-xl font-bold transition shadow-sm flex justify-center items-center gap-2 mt-4">
+                        <i data-lucide="save" class="w-5 h-5"></i> HOÀN TẤT & LƯU VÀO NGÂN HÀNG ĐỀ
+                    </button>
                 </div>
             </div>
             
             <!-- TAB 4: KẾT QUẢ -->
             <div id="teacher-content-results" class="teacher-tab-content space-y-6 hidden">
                 <div class="bg-white p-6 rounded-2xl border shadow-sm flex justify-between items-center">
-                    <div>
-                        <h3 class="font-bold text-lg text-slate-900">Kết Quả Bài Làm Học Sinh</h3>
-                        <p class="text-xs text-slate-500">Xem và xuất điểm số ra file Excel</p>
-                    </div>
-                    <button onclick="exportResultsExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition shadow-sm flex items-center gap-2"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Xuất Excel</button>
+                    <h3 class="font-bold text-lg text-slate-900">Kết Quả Bài Làm Học Sinh</h3>
+                    <button onclick="exportResultsExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Xuất Excel</button>
                 </div>
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
                     <table class="w-full text-left text-sm">
                         <thead class="bg-slate-50 text-slate-500 border-b">
-                            <tr><th class="p-4">Mã Phòng</th><th class="p-4">Học Sinh</th><th class="p-4">Lớp</th><th class="p-4">Điểm Số</th><th class="p-4">Thời gian nộp</th></tr>
+                            <tr><th class="p-4">Mã Phòng</th><th class="p-4">Học Sinh</th><th class="p-4">Lớp</th><th class="p-4">Điểm Số</th></tr>
                         </thead>
                         <tbody id="results-table-body" class="divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
 
-            <!-- TAB 5: ADMIN USER MANAGEMENT -->
-            <div id="teacher-content-admin" class="teacher-tab-content space-y-4 hidden">
-                <h3 class="text-lg font-bold text-slate-800">Quản lý tài khoản Giáo viên</h3>
-                <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-slate-50 text-slate-500 border-b">
-                            <tr><th class="p-4">Email</th><th class="p-4">Trạng thái (Role)</th><th class="p-4 text-right">Thao tác</th></tr>
-                        </thead>
-                        <tbody id="admin-users-table" class="divide-y divide-slate-100"></tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     </main>
 
     <script>
         lucide.createIcons();
 
-        // ================= CẤU HÌNH SUPABASE =================
-        const SUPABASE_URL = "https://kqgcqluayinvfzkzykgv.supabase.co";       // <-- Thay Link dự án của bạn
-        const SUPABASE_ANON_KEY = "sb_publishable__pj-PNYpSFUKaQkZXFzTpA_Qc7ckLHv"; // <-- Thay Anon Key của bạn
-        // =================================================================
+        // ================= THÔNG SỐ CẤU HÌNH SUPABASE =================
+        const SUPABASE_URL = "https://kqgcqluayinvfzkzykgv.supabase.co";       // <-- Thay Link dự án Supabase của bạn
+        const SUPABASE_ANON_KEY = "sb_publishable__pj-PNYpSFUKaQkZXFzTpA_Qc7ckLHv"; // <-- Thay Anon Key Supabase của bạn
+        // Lưu ý: API Key của AI bây giờ sẽ được nhập trực tiếp trên giao diện web.
+        // ===============================================================
 
         let supabaseClient = null;
         let currentUser = null;
         let userRole = null;
         let activeExamData = null;
         let examTimerInterval = null;
+        let aiGeneratedDraftList = [];
 
         window.onload = function() {
             if (window.supabase && SUPABASE_URL && SUPABASE_ANON_KEY) {
@@ -295,19 +314,15 @@ D. Đáp án thứ tư
             }
         };
 
-        // ================= AUTHENTICATION =================
+        // ================= XÁC THỰC (AUTH) =================
         async function setupAuthListener() {
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                await handleSessionValid(session.user);
-            } else {
-                switchRole('home');
-            }
+            if (session) await handleSessionValid(session.user);
+            else switchRole('home');
 
             supabaseClient.auth.onAuthStateChange(async (event, session) => {
-                if (event === 'SIGNED_IN') {
-                    await handleSessionValid(session.user);
-                } else if (event === 'SIGNED_OUT') {
+                if (event === 'SIGNED_IN') await handleSessionValid(session.user);
+                else if (event === 'SIGNED_OUT') {
                     currentUser = null; userRole = null;
                     document.getElementById('user-email-display').classList.add('hidden');
                     document.getElementById('btn-logout').classList.add('hidden');
@@ -318,79 +333,49 @@ D. Đáp án thứ tư
 
         async function handleSessionValid(user) {
             currentUser = user;
-            const emailDisplay = document.getElementById('user-email-display');
-            emailDisplay.innerText = user.email;
-            emailDisplay.classList.remove('hidden');
+            document.getElementById('user-email-display').innerText = user.email;
+            document.getElementById('user-email-display').classList.remove('hidden');
             document.getElementById('btn-logout').classList.remove('hidden');
             
             const { data } = await supabaseClient.from('profiles').select('role').eq('id', user.id).single();
             userRole = data ? data.role : 'pending';
             
-            if (userRole === 'admin') {
-                document.getElementById('t-tab-admin').classList.remove('hidden');
-            } else {
-                document.getElementById('t-tab-admin').classList.add('hidden');
-            }
-
+            if (userRole === 'admin') document.getElementById('t-tab-admin').classList.remove('hidden');
             switchRole('teacher'); 
         }
 
         async function loginWithGoogle() {
-            if (!supabaseClient) return;
-            await supabaseClient.auth.signInWithOAuth({ 
-                provider: 'google',
-                options: { redirectTo: window.location.origin }
-            });
+            await supabaseClient.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin }});
         }
 
         async function loginWithEmail() {
-            if (!supabaseClient) return;
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
-            
-            if(!email || !password) {
-                alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
-                return;
-            }
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password,
-            });
-
-            if (error) {
-                alert("Đăng nhập thất bại: " + error.message);
-            }
+            if(!email || !password) return alert("Nhập Email & Mật khẩu!");
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) alert("Lỗi: " + error.message);
         }
 
-        async function handleLogout() {
-            if(supabaseClient) await supabaseClient.auth.signOut();
-        }
+        async function handleLogout() { await supabaseClient.auth.signOut(); }
 
-        // ================= ROUTING =================
-        function hideAllViews() {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-        }
+        // ================= ĐIỀU HƯỚNG GIAO DIỆN =================
+        function hideAllViews() { document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden')); }
 
         function switchRole(role) {
             hideAllViews();
-            const btnS = document.getElementById("btn-role-student");
-            const btnT = document.getElementById("btn-role-teacher");
+            const btnS = document.getElementById("btn-role-student"), btnT = document.getElementById("btn-role-teacher");
             btnS.className = "px-3 py-1.5 rounded-lg transition text-white hover:bg-white/10";
             btnT.className = "px-3 py-1.5 rounded-lg transition text-white hover:bg-white/10";
 
-            if (role === 'home') {
-                document.getElementById('view-home').classList.remove('hidden');
-            } else if (role === 'student') {
-                btnS.className = "px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm";
+            if (role === 'home') document.getElementById('view-home').classList.remove('hidden');
+            else if (role === 'student') {
+                btnS.classList.add('bg-white', 'text-indigo-700', 'font-bold');
                 document.getElementById('view-student').classList.remove('hidden');
             } else if (role === 'teacher') {
-                btnT.className = "px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm";
-                if (!currentUser) {
-                    document.getElementById('view-login').classList.remove('hidden');
-                } else if (userRole === 'pending') {
-                    document.getElementById('view-pending').classList.remove('hidden');
-                } else {
+                btnT.classList.add('bg-white', 'text-indigo-700', 'font-bold');
+                if (!currentUser) document.getElementById('view-login').classList.remove('hidden');
+                else if (userRole === 'pending') document.getElementById('view-pending').classList.remove('hidden');
+                else {
                     document.getElementById('view-teacher').classList.remove('hidden');
                     switchTeacherTab(userRole === 'admin' ? 'admin' : 'rooms');
                 }
@@ -401,426 +386,371 @@ D. Đáp án thứ tư
             document.querySelectorAll('.teacher-tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`teacher-content-${tab}`).classList.remove('hidden');
             
-            ['rooms', 'banks', 'word', 'results', 'admin'].forEach(t => {
+            ['rooms', 'banks', 'ai-word', 'results', 'admin'].forEach(t => {
                 let btn = document.getElementById(`t-tab-${t}`);
                 if(btn) {
-                    if (t === 'admin') {
-                        btn.className = (tab === 'admin') 
-                            ? "px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white flex items-center gap-1.5 shadow-sm"
-                            : "px-4 py-2 rounded-xl text-sm font-bold bg-red-100 text-red-600 border border-red-200 flex items-center gap-1.5";
-                    } else if (t === 'word') {
-                         btn.className = (tab === t)
-                            ? "px-4 py-2 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-sm flex items-center gap-1"
-                            : "px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 transition flex items-center gap-1";
-                    } else {
+                    if (t === 'ai-word') {
                         btn.className = (tab === t)
-                            ? "px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm"
-                            : "px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition";
+                            ? "px-4 py-2 rounded-xl text-sm font-bold bg-blue-800 text-white shadow-sm flex items-center gap-1"
+                            : "px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 transition flex items-center gap-1";
+                    } else if (t === 'admin') {
+                        btn.className = (tab === t) ? "px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white flex items-center gap-1.5 shadow-sm" : "px-4 py-2 rounded-xl text-sm font-bold bg-red-100 text-red-600 border border-red-200 flex items-center gap-1.5";
+                    } else {
+                        btn.className = (tab === t) ? "px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm" : "px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition";
                     }
                 }
             });
 
             if(tab === 'rooms') loadTeacherRoomsAndBanks();
-            if(tab === 'banks' || tab === 'word') loadQuestionBanks();
+            if(tab === 'banks' || tab === 'ai-word') loadQuestionBanks();
             if(tab === 'results') loadExamResults();
             if(tab === 'admin' && userRole === 'admin') loadAdminUsers();
         }
 
-        // ================= CHỨC NĂNG XỬ LÝ WORD THÔNG MINH =================
-        async function uploadWordBank() {
-            const title = document.getElementById('word-title-input').value.trim();
-            const subject = document.getElementById('word-subject-input').value.trim();
-            const fileInput = document.getElementById('word-file-input').files[0];
+        // ================= LOGIC XỬ LÝ AI ĐA NỀN TẢNG (GEMINI & OPENAI) =================
+        
+        async function processAIWordFile() {
+            const provider = document.getElementById('ai-provider').value;
+            const apiKey = document.getElementById('ai-api-key').value.trim();
+            const title = document.getElementById('ai-title-input').value.trim();
+            const subject = document.getElementById('ai-subject-input').value.trim();
+            const fileInput = document.getElementById('ai-word-file').files[0];
+            const quantity = document.getElementById('ai-quantity-input').value || 10;
 
-            if (!title || !fileInput) {
-                alert("Vui lòng nhập tên bộ đề và chọn file Word (.docx)!");
+            if (!apiKey) {
+                alert("Vui lòng dán Mã API Key của bạn (Google Gemini hoặc OpenAI) vào ô tương ứng!");
                 return;
             }
 
+            if (!title || !fileInput) {
+                alert("Vui lòng điền Tên bộ đề và Tải lên file Word đề cương!");
+                return;
+            }
+
+            document.getElementById('ai-loading').classList.remove('hidden');
+            document.getElementById('ai-preview-section').classList.add('hidden');
+
             const reader = new FileReader();
             reader.onload = function(event) {
-                const arrayBuffer = event.target.result;
-                mammoth.extractRawText({arrayBuffer: arrayBuffer})
+                mammoth.extractRawText({arrayBuffer: event.target.result})
                     .then(async function(result) {
-                        const text = result.value;
-                        const questionsData = parseWordTextToQuestions(text);
-                        
-                        if(questionsData.length === 0) {
-                            alert("Không tìm thấy câu hỏi trắc nghiệm nào hợp lệ. Hệ thống đã tự động lọc bỏ các câu tự luận và tiêu đề rác. Vui lòng kiểm tra lại định dạng file Word.");
+                        const extractedText = result.value;
+                        if(extractedText.trim().length < 50) {
+                            alert("File Word quá ngắn hoặc không đọc được chữ. Vui lòng kiểm tra lại.");
+                            document.getElementById('ai-loading').classList.add('hidden');
                             return;
                         }
-
-                        try {
-                            const { data: bankData, error: bankErr } = await supabaseClient
-                                .from('question_banks')
-                                .insert([{ title, subject }])
-                                .select()
-                                .single();
-
-                            if (bankErr) throw bankErr;
-                            const bankId = bankData.id;
-
-                            const finalQuestions = questionsData.map(q => ({...q, bank_id: bankId}));
-
-                            const { error: qErr } = await supabaseClient.from('questions').insert(finalQuestions);
-                            if (qErr) throw qErr;
-
-                            alert(`Thành công! Đã lọc rác và lưu ${finalQuestions.length} câu hỏi trắc nghiệm vào ngân hàng đề.`);
-                            document.getElementById('word-title-input').value = '';
-                            document.getElementById('word-subject-input').value = '';
-                            document.getElementById('word-file-input').value = '';
-                            
-                            switchTeacherTab('rooms');
-                        } catch (err) {
-                            alert("Lỗi lưu dữ liệu: " + err.message);
-                        }
+                        
+                        await callAIProvider(extractedText, quantity, provider, apiKey);
                     })
                     .catch(function(err) {
-                        alert("Lỗi đọc file Word: " + err.message);
+                        alert("Lỗi khi đọc file Word: " + err.message);
+                        document.getElementById('ai-loading').classList.add('hidden');
                     });
             };
             reader.readAsArrayBuffer(fileInput);
         }
 
-        // Thuật toán bóc tách Word thông minh đã được cải tiến
-        function parseWordTextToQuestions(text) {
-            let questions = [];
-            const parts = text.split(/(?=(?:Câu|Bài)\s*\d+[\.\:]?)/i);
-            
-            parts.forEach(part => {
-                const partTrimmed = part.trim();
-                
-                if (/^(?:Câu|Bài)\s*\d+[\.\:]?/i.test(partTrimmed)) {
-                    const questionMatch = partTrimmed.match(/^(?:Câu|Bài)\s*\d+[\.\:]?\s*(.*?)(?=(?:\s|^)A[\.\)])/is);
-                    const aMatch = partTrimmed.match(/(?:\s|^)A[\.\)](.*?)(?=(?:\s|^)B[\.\)])/is);
-                    const bMatch = partTrimmed.match(/(?:\s|^)B[\.\)](.*?)(?=(?:\s|^)C[\.\)])/is);
-                    const cMatch = partTrimmed.match(/(?:\s|^)C[\.\)](.*?)(?=(?:\s|^)D[\.\)])/is);
-                    const dMatch = partTrimmed.match(/(?:\s|^)D[\.\)](.*?)(?=\bĐáp án|\bHướng dẫn|\bLời giải|$)/is);
-                    const ansMatch = partTrimmed.match(/\bĐáp án\s*[:\-\.]?\s*([A-D])/i);
+        async function callAIProvider(documentText, quantity, provider, apiKey) {
+            const prompt = `
+Bạn là một chuyên gia thiết kế đề thi trắc nghiệm xuất sắc.
+Hãy đọc hiểu nội dung tài liệu đính kèm bên dưới. Trích xuất các kiến thức trọng tâm và tự động sáng tác ra ${quantity} câu hỏi trắc nghiệm (gồm 1 câu hỏi, 4 đáp án A, B, C, D và 1 đáp án đúng).
+LƯU Ý CỰC KỲ QUAN TRỌNG VỀ ĐỊNH DẠNG:
+- Bắt buộc trả về kết quả dưới dạng một mảng JSON thuần túy.
+- KHÔNG BAO GỒM markdown format (như \`\`\`json).
+- KHÔNG CÓ text giải thích ở đầu hay cuối. Chỉ xuất mảng JSON bắt đầu bằng [ và kết thúc bằng ].
+- Các key trong JSON phải viết đúng như sau: "question_text", "option_a", "option_b", "option_c", "option_d", "correct_answer".
+- "correct_answer" chỉ ghi 1 ký tự "A", "B", "C", hoặc "D".
 
-                    // Chỉ đẩy vào khi ĐỦ tất cả các phần (loại bỏ tự luận, tiêu đề)
-                    if (questionMatch && aMatch && bMatch && cMatch && dMatch && ansMatch) {
-                        questions.push({
-                            question_text: cleanText(questionMatch[1]),
-                            option_a: cleanText(aMatch[1]),
-                            option_b: cleanText(bMatch[1]),
-                            option_c: cleanText(cMatch[1]),
-                            option_d: cleanText(dMatch[1]),
-                            correct_answer: ansMatch[1].toUpperCase()
-                        });
-                    }
+Ví dụ mẫu đầu ra yêu cầu:
+[
+  {
+    "question_text": "Thủ đô của Việt Nam là gì?",
+    "option_a": "Hà Nội",
+    "option_b": "Hồ Chí Minh",
+    "option_c": "Đà Nẵng",
+    "option_d": "Huế",
+    "correct_answer": "A"
+  }
+]
+
+Nội dung tài liệu:
+${documentText}
+            `;
+
+            try {
+                let aiRawText = "";
+
+                if (provider === "gemini") {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { temperature: 0.2 } 
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
+                    aiRawText = data.candidates[0].content.parts[0].text;
+                } 
+                else if (provider === "openai") {
+                    const response = await fetch(`https://api.openai.com/v1/chat/completions`, {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: "gpt-4o-mini", // Có thể đổi thành gpt-3.5-turbo nếu cần
+                            messages: [{ role: "user", content: prompt }],
+                            temperature: 0.2
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error.message);
+                    aiRawText = data.choices[0].message.content;
                 }
+
+                // Loại bỏ rác markdown nếu AI sinh ra
+                aiRawText = aiRawText.replace(/```json/gi, '').replace(/```/gi, '').trim();
+
+                try {
+                    aiGeneratedDraftList = JSON.parse(aiRawText);
+                    document.getElementById('ai-loading').classList.add('hidden');
+                    renderAIPreviewList(aiGeneratedDraftList);
+                } catch (parseError) {
+                    console.error("AI Text returned:", aiRawText);
+                    alert("AI trả về định dạng không đúng chuẩn JSON. Vui lòng thử lại.");
+                    document.getElementById('ai-loading').classList.add('hidden');
+                }
+
+            } catch (err) {
+                alert(`Lỗi kết nối tới API (${provider}): ` + err.message);
+                document.getElementById('ai-loading').classList.add('hidden');
+            }
+        }
+
+        // Tạo giao diện Preview để Giáo viên tự sửa đề do AI sinh ra
+        function renderAIPreviewList(questions) {
+            document.getElementById('ai-preview-section').classList.remove('hidden');
+            const container = document.getElementById('ai-questions-list');
+            let html = "";
+
+            questions.forEach((q, index) => {
+                html += `
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm question-draft-item">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded text-sm">Câu ${index + 1}</span>
+                        <button onclick="this.parentElement.parentElement.remove()" class="text-red-500 hover:text-red-700 text-sm font-semibold bg-red-50 px-2 py-1 rounded">Xóa câu này</button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nội dung câu hỏi</label>
+                            <textarea class="w-full border border-slate-300 rounded-lg p-2 text-sm font-semibold text-slate-800 q-text" rows="2">${q.question_text}</textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="flex items-center border rounded-lg overflow-hidden focus-within:border-blue-500">
+                                <span class="bg-slate-100 px-3 py-2 font-bold text-slate-600 text-sm border-r">A</span>
+                                <input type="text" class="w-full px-3 py-2 text-sm q-optA" value="${q.option_a}">
+                            </div>
+                            <div class="flex items-center border rounded-lg overflow-hidden focus-within:border-blue-500">
+                                <span class="bg-slate-100 px-3 py-2 font-bold text-slate-600 text-sm border-r">B</span>
+                                <input type="text" class="w-full px-3 py-2 text-sm q-optB" value="${q.option_b}">
+                            </div>
+                            <div class="flex items-center border rounded-lg overflow-hidden focus-within:border-blue-500">
+                                <span class="bg-slate-100 px-3 py-2 font-bold text-slate-600 text-sm border-r">C</span>
+                                <input type="text" class="w-full px-3 py-2 text-sm q-optC" value="${q.option_c}">
+                            </div>
+                            <div class="flex items-center border rounded-lg overflow-hidden focus-within:border-blue-500">
+                                <span class="bg-slate-100 px-3 py-2 font-bold text-slate-600 text-sm border-r">D</span>
+                                <input type="text" class="w-full px-3 py-2 text-sm q-optD" value="${q.option_d}">
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 pt-2">
+                            <label class="text-sm font-bold text-slate-700">Đáp án đúng:</label>
+                            <select class="border border-slate-300 rounded-lg px-3 py-1.5 text-sm font-bold text-emerald-700 q-ans">
+                                <option value="A" ${q.correct_answer === 'A' ? 'selected' : ''}>Đáp án A</option>
+                                <option value="B" ${q.correct_answer === 'B' ? 'selected' : ''}>Đáp án B</option>
+                                <option value="C" ${q.correct_answer === 'C' ? 'selected' : ''}>Đáp án C</option>
+                                <option value="D" ${q.correct_answer === 'D' ? 'selected' : ''}>Đáp án D</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function saveAIGeneratedQuestionsToDB() {
+            const title = document.getElementById('ai-title-input').value.trim();
+            const subject = document.getElementById('ai-subject-input').value.trim();
+            
+            const draftElements = document.querySelectorAll('.question-draft-item');
+            if(draftElements.length === 0) return alert("Không có câu hỏi nào để lưu!");
+
+            let finalQuestionsToInsert = [];
+            draftElements.forEach(el => {
+                finalQuestionsToInsert.push({
+                    question_text: el.querySelector('.q-text').value.trim(),
+                    option_a: el.querySelector('.q-optA').value.trim(),
+                    option_b: el.querySelector('.q-optB').value.trim(),
+                    option_c: el.querySelector('.q-optC').value.trim(),
+                    option_d: el.querySelector('.q-optD').value.trim(),
+                    correct_answer: el.querySelector('.q-ans').value
+                });
             });
 
-            return questions;
-        }
+            try {
+                const { data: bankData, error: bankErr } = await supabaseClient.from('question_banks').insert([{ title: title + ' (AI Gen)', subject }]).select().single();
+                if (bankErr) throw bankErr;
 
-        function cleanText(str) {
-            return str.replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-        }
+                const finalArray = finalQuestionsToInsert.map(q => ({...q, bank_id: bankData.id}));
+                const { error: qErr } = await supabaseClient.from('questions').insert(finalArray);
+                if (qErr) throw qErr;
 
-        // ================= TEACHER: EXCEL QUESTION BANKS =================
-        async function uploadQuestionBank() {
-            const title = document.getElementById('bank-title-input').value.trim();
-            const subject = document.getElementById('bank-subject-input').value.trim();
-            const fileInput = document.getElementById('excel-file-input').files[0];
-
-            if (!title || !fileInput) {
-                alert("Vui lòng nhập tên bộ đề và chọn file Excel!");
-                return;
+                alert(`Tuyệt vời! Đã lưu thành công ${finalArray.length} câu hỏi do AI tạo vào ngân hàng đề.`);
+                
+                document.getElementById('ai-title-input').value = '';
+                document.getElementById('ai-subject-input').value = '';
+                document.getElementById('ai-word-file').value = '';
+                document.getElementById('ai-preview-section').classList.add('hidden');
+                
+                switchTeacherTab('rooms');
+            } catch (error) {
+                alert("Lỗi lưu DB: " + error.message);
             }
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
-
-                    const { data: bankData, error: bankErr } = await supabaseClient
-                        .from('question_banks')
-                        .insert([{ title, subject }])
-                        .select()
-                        .single();
-
-                    if (bankErr) throw bankErr;
-                    const bankId = bankData.id;
-
-                    let questionsToInsert = [];
-                    for (let i = 1; i < rows.length; i++) {
-                        const r = rows[i];
-                        if (r && r.length >= 6) {
-                            questionsToInsert.push({
-                                bank_id: bankId,
-                                question_text: String(r[0]),
-                                option_a: String(r[1]),
-                                option_b: String(r[2]),
-                                option_c: String(r[3]),
-                                option_d: String(r[4]),
-                                correct_answer: String(r[5]).trim().toUpperCase()
-                            });
-                        }
-                    }
-
-                    if (questionsToInsert.length === 0) {
-                        alert("File Excel không có câu hỏi hợp lệ hoặc sai định dạng cột!");
-                        return;
-                    }
-
-                    const { error: qErr } = await supabaseClient.from('questions').insert(questionsToInsert);
-                    if (qErr) throw qErr;
-
-                    alert("Tải lên ngân hàng câu hỏi thành công!");
-                    document.getElementById('bank-title-input').value = '';
-                    document.getElementById('bank-subject-input').value = '';
-                    document.getElementById('excel-file-input').value = '';
-                    loadQuestionBanks();
-                } catch (err) {
-                    alert("Lỗi xử lý file: " + err.message);
-                }
-            };
-            reader.readAsArrayBuffer(fileInput);
         }
 
+
+        // ================= CÁC HÀM CŨ (EXCEL, TẠO PHÒNG, THI, KẾT QUẢ) =================
         async function loadQuestionBanks() {
             const { data, error } = await supabaseClient.from('question_banks').select('*').order('created_at', { ascending: false });
             if (error) return;
-
-            let html = "";
-            let selectHtml = '<option value="">-- Chọn bộ đề câu hỏi --</option>';
+            let html = "", selectHtml = '<option value="">-- Chọn bộ đề câu hỏi --</option>';
             data.forEach(b => {
                 selectHtml += `<option value="${b.id}">${b.title} (${b.subject || 'Chung'})</option>`;
-                html += `
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="p-4 font-semibold text-slate-800">${b.title}</td>
-                        <td class="p-4 text-slate-600">${b.subject || '-'}</td>
-                        <td class="p-4 text-slate-500 text-xs">${new Date(b.created_at).toLocaleDateString('vi-VN')}</td>
-                        <td class="p-4 text-right"><button onclick="deleteBank('${b.id}')" class="text-red-500 hover:text-red-700 font-bold text-xs bg-red-50 px-3 py-1 rounded-lg">Xóa</button></td>
-                    </tr>
-                `;
+                html += `<tr class="border-b hover:bg-slate-50"><td class="p-4 font-semibold text-slate-800">${b.title}</td><td class="p-4 text-slate-600">${b.subject || '-'}</td><td class="p-4 text-right"><button onclick="deleteBank('${b.id}')" class="text-red-500 font-bold text-xs bg-red-50 px-3 py-1 rounded-lg">Xóa</button></td></tr>`;
             });
-            document.getElementById('banks-table-body').innerHTML = html || '<tr><td colspan="4" class="p-4 text-center text-slate-400">Chưa có bộ đề nào</td></tr>';
+            const tb = document.getElementById('banks-table-body');
+            if(tb) tb.innerHTML = html || '<tr><td colspan="3" class="p-4 text-center text-slate-400">Chưa có bộ đề nào</td></tr>';
             const bankSelect = document.getElementById('room-bank-select');
             if(bankSelect) bankSelect.innerHTML = selectHtml;
         }
 
         async function deleteBank(id) {
-            if(!confirm("Bạn có chắc chắn muốn xóa bộ đề này?")) return;
+            if(!confirm("Xóa bộ đề này?")) return;
             await supabaseClient.from('question_banks').delete().eq('id', id);
             loadQuestionBanks();
         }
 
-        // ================= TEACHER: EXAM ROOMS =================
+        async function uploadQuestionBank() {
+            const t = document.getElementById('bank-title-input').value, s = document.getElementById('bank-subject-input').value, f = document.getElementById('excel-file-input').files[0];
+            if (!t || !f) return alert("Nhập tên đề và chọn file Excel!");
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const data = new Uint8Array(e.target.result), workbook = XLSX.read(data, { type: 'array' }), rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                const { data: bankData, error: bankErr } = await supabaseClient.from('question_banks').insert([{ title: t, subject: s }]).select().single();
+                if (bankErr) return alert(bankErr.message);
+                let qToInsert = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const r = rows[i];
+                    if (r && r.length >= 6) qToInsert.push({ bank_id: bankData.id, question_text: String(r[0]), option_a: String(r[1]), option_b: String(r[2]), option_c: String(r[3]), option_d: String(r[4]), correct_answer: String(r[5]).trim().toUpperCase() });
+                }
+                if (qToInsert.length === 0) return alert("File Excel sai định dạng!");
+                await supabaseClient.from('questions').insert(qToInsert);
+                alert("Tải lên Excel thành công!"); loadQuestionBanks();
+            };
+            reader.readAsArrayBuffer(f);
+        }
+
         async function loadTeacherRoomsAndBanks() {
             await loadQuestionBanks();
-            const { data, error } = await supabaseClient.from('exam_rooms').select('*, question_banks(title)').order('created_at', { ascending: false });
-            if (error) return;
-
+            const { data } = await supabaseClient.from('exam_rooms').select('*, question_banks(title)').order('created_at', { ascending: false });
             let html = "";
-            data.forEach(r => {
-                html += `
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="p-4 font-bold text-indigo-600">${r.code}</td>
-                        <td class="p-4 font-semibold">${r.title}</td>
-                        <td class="p-4 text-slate-600">${r.duration} phút</td>
-                        <td class="p-4 text-right"><button onclick="deleteRoom('${r.id}')" class="text-red-500 hover:text-red-700 font-bold text-xs bg-red-50 px-3 py-1 rounded-lg">Xóa</button></td>
-                    </tr>
-                `;
-            });
-            document.getElementById('rooms-table-body').innerHTML = html || '<tr><td colspan="4" class="p-4 text-center text-slate-400">Chưa có phòng thi nào</td></tr>';
+            (data||[]).forEach(r => { html += `<tr class="border-b"><td class="p-4 font-bold text-indigo-600">${r.code}</td><td class="p-4">${r.title}</td><td class="p-4">${r.duration}p</td><td class="p-4 text-right"><button onclick="deleteRoom('${r.id}')" class="text-red-500 font-bold text-xs bg-red-50 px-3 py-1 rounded">Xóa</button></td></tr>`;});
+            document.getElementById('rooms-table-body').innerHTML = html;
         }
 
         async function createExamRoom() {
-            const code = document.getElementById('room-code-input').value.trim().toUpperCase();
-            const title = document.getElementById('room-title-input').value.trim();
-            const bank_id = document.getElementById('room-bank-select').value;
-            const duration = parseInt(document.getElementById('room-duration-input').value) || 15;
-
-            if(!code || !title || !bank_id) {
-                alert("Vui lòng điền đầy đủ mã phòng, tên kỳ thi và chọn bộ đề!");
-                return;
-            }
-
+            const code = document.getElementById('room-code-input').value.toUpperCase(), title = document.getElementById('room-title-input').value, bank_id = document.getElementById('room-bank-select').value, duration = parseInt(document.getElementById('room-duration-input').value)||15;
+            if(!code || !title || !bank_id) return alert("Điền đủ thông tin!");
             const { error } = await supabaseClient.from('exam_rooms').insert([{ code, title, bank_id, duration }]);
-            if (error) { alert("Lỗi tạo phòng (Có thể mã phòng bị trùng): " + error.message); return; }
-
-            alert("Tạo phòng thi thành công!");
-            document.getElementById('room-code-input').value = '';
-            document.getElementById('room-title-input').value = '';
-            loadTeacherRoomsAndBanks();
+            if (error) alert("Lỗi: " + error.message); else { alert("Tạo thành công!"); loadTeacherRoomsAndBanks(); }
         }
+        async function deleteRoom(id) { if(confirm("Xóa phòng?")) { await supabaseClient.from('exam_rooms').delete().eq('id', id); loadTeacherRoomsAndBanks(); } }
 
-        async function deleteRoom(id) {
-            if(!confirm("Xóa phòng thi này?")) return;
-            await supabaseClient.from('exam_rooms').delete().eq('id', id);
-            loadTeacherRoomsAndBanks();
-        }
-
-        // ================= STUDENT EXAM FLOW =================
         async function verifyJoinCode() {
-            const code = document.getElementById('join-code').value.trim().toUpperCase();
-            const name = document.getElementById('student-name').value.trim();
-            const className = document.getElementById('student-class').value.trim();
-
-            if(!code || !name || !className) {
-                alert("Vui lòng nhập đầy đủ mã phòng, họ tên và lớp!");
-                return;
-            }
-
-            const { data: room, error } = await supabaseClient.from('exam_rooms').select('*, question_banks(title)').eq('code', code).single();
-            if (error || !room) { alert("Không tìm thấy phòng thi với mã này!"); return; }
-
+            const code = document.getElementById('join-code').value.toUpperCase(), name = document.getElementById('student-name').value, cls = document.getElementById('student-class').value;
+            if(!code || !name || !cls) return alert("Nhập đủ thông tin!");
+            const { data: room, error } = await supabaseClient.from('exam_rooms').select('*').eq('code', code).single();
+            if (error || !room) return alert("Không thấy phòng!");
             const { data: questions } = await supabaseClient.from('questions').select('*').eq('bank_id', room.bank_id);
-            if (!questions || questions.length === 0) { alert("Phòng thi này chưa có câu hỏi nào!"); return; }
-
-            activeExamData = { room, questions, student: { name, class: className } };
-            
-            document.getElementById('student-step-join').classList.add('hidden');
-            document.getElementById('student-step-exam').classList.remove('hidden');
-            document.getElementById('exam-room-title').innerText = room.title;
-            document.getElementById('student-info-tag').innerText = `Học sinh: ${name} | Lớp: ${className}`;
-
-            renderExamQuestions(questions);
+            if (!questions || !questions.length) return alert("Phòng chưa có câu hỏi!");
+            activeExamData = { room, questions, student: { name, class: cls } };
+            document.getElementById('student-step-join').classList.add('hidden'); document.getElementById('student-step-exam').classList.remove('hidden');
+            document.getElementById('exam-room-title').innerText = room.title; document.getElementById('student-info-tag').innerText = `${name} - Lớp: ${cls}`;
+            let qHtml = "";
+            questions.forEach((q, i) => {
+                qHtml += `<div class="bg-white p-6 rounded-2xl border mb-4"><p class="font-bold mb-3">Câu ${i+1}: ${q.question_text}</p><div class="grid sm:grid-cols-2 gap-2">
+                <label class="flex items-center gap-3 p-3 border rounded-xl"><input type="radio" name="q_${q.id}" value="A"> <span><b>A.</b> ${q.option_a}</span></label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl"><input type="radio" name="q_${q.id}" value="B"> <span><b>B.</b> ${q.option_b}</span></label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl"><input type="radio" name="q_${q.id}" value="C"> <span><b>C.</b> ${q.option_c}</span></label>
+                <label class="flex items-center gap-3 p-3 border rounded-xl"><input type="radio" name="q_${q.id}" value="D"> <span><b>D.</b> ${q.option_d}</span></label>
+                </div></div>`;
+            });
+            document.getElementById('exam-questions-container').innerHTML = qHtml;
             startExamTimer(room.duration * 60);
         }
 
-        function renderExamQuestions(questions) {
-            let html = "";
-            questions.forEach((q, index) => {
-                html += `
-                    <div class="bg-white p-6 rounded-2xl border shadow-sm space-y-3">
-                        <p class="font-bold text-slate-800">Câu ${index + 1}: ${q.question_text}</p>
-                        <div class="grid sm:grid-cols-2 gap-2">
-                            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-indigo-50/50 transition"><input type="radio" name="q_${q.id}" value="A" class="text-indigo-600"> <span class="text-sm"><b>A.</b> ${q.option_a}</span></label>
-                            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-indigo-50/50 transition"><input type="radio" name="q_${q.id}" value="B" class="text-indigo-600"> <span class="text-sm"><b>B.</b> ${q.option_b}</span></label>
-                            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-indigo-50/50 transition"><input type="radio" name="q_${q.id}" value="C" class="text-indigo-600"> <span class="text-sm"><b>C.</b> ${q.option_c}</span></label>
-                            <label class="flex items-center gap-3 p-3 border rounded-xl cursor-pointer hover:bg-indigo-50/50 transition"><input type="radio" name="q_${q.id}" value="D" class="text-indigo-600"> <span class="text-sm"><b>D.</b> ${q.option_d}</span></label>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('exam-questions-container').innerHTML = html;
-        }
-
-        function startExamTimer(durationSeconds) {
-            let timer = durationSeconds;
-            const display = document.getElementById('exam-timer');
-            if(examTimerInterval) clearInterval(examTimerInterval);
-
+        function startExamTimer(sec) {
+            let t = sec; const d = document.getElementById('exam-timer');
             examTimerInterval = setInterval(() => {
-                let m = parseInt(timer / 60, 10);
-                let s = parseInt(timer % 60, 10);
-                m = m < 10 ? "0" + m : m;
-                s = s < 10 ? "0" + s : s;
-                display.textContent = m + ":" + s;
-
-                if (--timer < 0) {
-                    clearInterval(examTimerInterval);
-                    alert("Đã hết thời gian làm bài! Hệ thống tự động nộp bài.");
-                    submitExam(true);
-                }
+                let m = parseInt(t/60), s = parseInt(t%60);
+                d.textContent = (m<10?"0"+m:m) + ":" + (s<10?"0"+s:s);
+                if (--t < 0) { clearInterval(examTimerInterval); alert("Hết giờ!"); submitExam(true); }
             }, 1000);
         }
 
-        async function submitExam(isAuto = false) {
-            if(!isAuto && !confirm("Bạn có chắc chắn muốn nộp bài?")) return;
-            if(examTimerInterval) clearInterval(examTimerInterval);
-
-            let correctCount = 0;
-            const questions = activeExamData.questions;
-
-            questions.forEach(q => {
-                const selected = document.querySelector(`input[name="q_${q.id}"]:checked`);
-                if (selected && selected.value === q.correct_answer) {
-                    correctCount++;
-                }
-            });
-
-            const score = ((correctCount / questions.length) * 10).toFixed(2);
-
-            await supabaseClient.from('exam_results').insert([{
-                room_code: activeExamData.room.code,
-                student_name: activeExamData.student.name,
-                student_class: activeExamData.student.class,
-                score: parseFloat(score),
-                total_questions: questions.length
-            }]);
-
-            document.getElementById('student-step-exam').classList.add('hidden');
-            document.getElementById('student-step-result').classList.remove('hidden');
-            document.getElementById('final-score-display').innerText = `${score} / 10 (${correctCount}/${questions.length} câu đúng)`;
+        async function submitExam(auto=false) {
+            if(!auto && !confirm("Nộp bài?")) return;
+            clearInterval(examTimerInterval);
+            let c = 0, qs = activeExamData.questions;
+            qs.forEach(q => { const s = document.querySelector(`input[name="q_${q.id}"]:checked`); if(s && s.value === q.correct_answer) c++; });
+            const score = ((c / qs.length) * 10).toFixed(2);
+            await supabaseClient.from('exam_results').insert([{ room_code: activeExamData.room.code, student_name: activeExamData.student.name, student_class: activeExamData.student.class, score: parseFloat(score), total_questions: qs.length }]);
+            document.getElementById('student-step-exam').classList.add('hidden'); document.getElementById('student-step-result').classList.remove('hidden');
+            document.getElementById('final-score-display').innerText = `${score}/10`;
         }
 
-        // ================= RESULTS & ADMIN =================
         async function loadExamResults() {
-            const { data, error } = await supabaseClient.from('exam_results').select('*').order('submitted_at', { ascending: false });
-            if (error) return;
-
-            let html = "";
-            data.forEach(r => {
-                html += `
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="p-4 font-bold text-indigo-600">${r.room_code}</td>
-                        <td class="p-4 font-semibold">${r.student_name}</td>
-                        <td class="p-4">${r.student_class}</td>
-                        <td class="p-4 font-extrabold text-emerald-600">${r.score} điểm</td>
-                        <td class="p-4 text-xs text-slate-500">${new Date(r.submitted_at).toLocaleString('vi-VN')}</td>
-                    </tr>
-                `;
-            });
-            document.getElementById('results-table-body').innerHTML = html || '<tr><td colspan="5" class="p-4 text-center text-slate-400">Chưa có kết quả bài thi nào</td></tr>';
+            const { data } = await supabaseClient.from('exam_results').select('*').order('submitted_at', { ascending: false });
+            let h = "";
+            (data||[]).forEach(r => h += `<tr class="border-b"><td class="p-4 font-bold text-indigo-600">${r.room_code}</td><td class="p-4">${r.student_name}</td><td class="p-4">${r.student_class}</td><td class="p-4 font-bold text-emerald-600">${r.score}</td></tr>`);
+            document.getElementById('results-table-body').innerHTML = h;
         }
 
         function exportResultsExcel() {
             supabaseClient.from('exam_results').select('*').then(({ data }) => {
-                if(!data || data.length === 0) { alert("Không có dữ liệu để xuất!"); return; }
-                const ws = XLSX.utils.json_to_sheet(data.map(item => ({
-                    "Mã Phòng": item.room_code,
-                    "Học Sinh": item.student_name,
-                    "Lớp": item.student_class,
-                    "Điểm Số": item.score,
-                    "Tổng Câu": item.total_questions,
-                    "Thời Gian Nộp": new Date(item.submitted_at).toLocaleString('vi-VN')
-                })));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "KetQuaThi");
-                XLSX.writeFile(wb, "KetQuaKhaoThi.xlsx");
+                if(!data||!data.length) return;
+                const ws = XLSX.utils.json_to_sheet(data.map(i => ({"Mã Phòng": i.room_code, "Học Sinh": i.student_name, "Lớp": i.student_class, "Điểm": i.score, "Ngày": new Date(i.submitted_at).toLocaleString('vi-VN')})));
+                const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "KQ"); XLSX.writeFile(wb, "KetQua.xlsx");
             });
         }
-
+        
         async function loadAdminUsers() {
-            const { data, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
-            if (error) return;
-            
-            let html = "";
-            data.forEach(u => {
-                let statusSpan = u.role === 'admin' ? '<span class="text-purple-600 font-bold">Admin</span>' 
-                               : u.role === 'teacher' ? '<span class="text-emerald-600 font-bold">Giáo viên</span>' 
-                               : '<span class="text-amber-600 font-bold">Chờ duyệt</span>';
-                
-                let actionBtn = u.role === 'pending' 
-                    ? `<button onclick="updateUserRole('${u.id}', 'teacher')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-xs font-bold hover:bg-emerald-200">Phê duyệt</button>`
-                    : u.role === 'teacher' 
-                    ? `<button onclick="updateUserRole('${u.id}', 'pending')" class="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Hủy quyền</button>`
-                    : '';
-
-                html += `
-                    <tr class="border-b hover:bg-slate-50">
-                        <td class="p-4">${u.email}</td>
-                        <td class="p-4">${statusSpan}</td>
-                        <td class="p-4 text-right">${actionBtn}</td>
-                    </tr>
-                `;
+            const { data } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+            let h = "";
+            (data||[]).forEach(u => {
+                let statusSpan = u.role === 'admin' ? '<span class="text-purple-600 font-bold">Admin</span>' : u.role === 'teacher' ? '<span class="text-emerald-600 font-bold">Giáo viên</span>' : '<span class="text-amber-600 font-bold">Chờ duyệt</span>';
+                let actionBtn = u.role === 'pending' ? `<button onclick="updateUserRole('${u.id}', 'teacher')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded text-xs font-bold hover:bg-emerald-200">Phê duyệt</button>` : u.role === 'teacher' ? `<button onclick="updateUserRole('${u.id}', 'pending')" class="bg-red-100 text-red-700 px-3 py-1 rounded text-xs font-bold hover:bg-red-200">Hủy quyền</button>` : '';
+                h += `<tr class="border-b hover:bg-slate-50"><td class="p-4">${u.email}</td><td class="p-4">${statusSpan}</td><td class="p-4 text-right">${actionBtn}</td></tr>`;
             });
-            document.getElementById('admin-users-table').innerHTML = html;
+            document.getElementById('admin-users-table').innerHTML = h;
         }
-
-        async function updateUserRole(id, newRole) {
-            const { error } = await supabaseClient.from('profiles').update({ role: newRole }).eq('id', id);
-            if (error) alert("Lỗi: " + error.message);
-            else loadAdminUsers();
-        }
+        async function updateUserRole(id, role) { await supabaseClient.from('profiles').update({ role }).eq('id', id); loadAdminUsers(); }
     </script>
 </body>
 </html>
