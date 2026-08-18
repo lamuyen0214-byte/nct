@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GV NCT PRO ONLINE - Hệ Thống Khảo Thí Trực Tuyến THCS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS (XLSX) cho xuất/nhập Excel -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Modal Cấu hình Supabase (Lần đầu hoặc cài đặt) -->
+    <div id="supabase-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-xl font-bold text-indigo-600 mb-2 flex items-center gap-2">
+                <i data-lucide="database"></i> Cấu hình kết nối Supabase
+            </h3>
+            <p class="text-sm text-slate-500 mb-4">Nhập thông tin dự án Supabase để lưu trữ dữ liệu trực tuyến (phục vụ học sinh toàn trường).</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">SUPABASE URL</label>
+                    <input type="text" id="sb-url" placeholder="https://xxxx.supabase.co" class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">SUPABASE ANON KEY</label>
+                    <input type="password" id="sb-key" placeholder="eyJhbGciOi..." class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button onclick="saveSupabaseConfig()" class="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition">Kết nối & Lưu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-700 to-blue-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="switchView('home')">
+                <div class="bg-white/15 p-2 rounded-xl backdrop-blur-sm">
+                    <i data-lucide="graduation-cap" class="w-7 h-7 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">GV NCT PRO ONLINE</h1>
+                    <p class="text-xs text-indigo-200">Hệ thống khảo thí THCS thông minh</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openConfigModal()" class="text-xs bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5">
+                    <i data-lucide="settings" class="w-4 h-4"></i> Cấu hình DB
+                </button>
+                <div id="role-switcher" class="flex bg-white/10 p-1 rounded-xl text-xs font-medium">
+                    <button onclick="switchRole('student')" id="btn-role-student" class="px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm">Học sinh</button>
+                    <button onclick="switchRole('teacher')" id="btn-role-teacher" class="px-3 py-1.5 rounded-lg transition text-white hover:bg-white/10">Giáo viên</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6">
+        
+        <!-- ================= VIEW: HOME / CHỌN VAI TRÒ ================= -->
+        <div id="view-home" class="view-section max-w-3xl mx-auto py-10 text-center">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 mb-4">Nền Tảng Thi Trực Tuyến & Ôn Tập THCS</h2>
+            <p class="text-slate-600 mb-8 text-base">Hỗ trợ đầy đủ các môn học, trộn đề ngẫu nhiên, chấm điểm thời gian thực và xuất báo cáo Excel chuyên nghiệp.</p>
+            
+            <div class="grid sm:grid-cols-2 gap-6 text-left">
+                <div onclick="switchRole('student'); showStudentJoin();" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                        <i data-lucide="user-check" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Dành cho Học Sinh</h3>
+                    <p class="text-sm text-slate-500 mb-4">Nhập mã tham gia từ giáo viên gửi qua Zalo để vào phòng thi, làm bài và nhận kết quả ngay lập tức.</p>
+                    <span class="text-indigo-600 font-semibold text-sm flex items-center gap-1">Vào phòng thi <i data-lucide="arrow-right" class="w-4 h-4"></i></span>
+                </div>
+
+                <div onclick="switchRole('teacher');" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition cursor-pointer group">
+                    <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition">
+                        <i data-lucide="briefcase" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800 mb-2">Dành cho Giáo Viên</h3>
+                    <p class="text-sm text-slate-500 mb-4">Quản lý ngân hàng câu hỏi, tạo phòng thi, cấu hình thời gian, theo dõi điểm số trực tuyến và xuất Excel.</p>
+                    <span class="text-indigo-600 font-semibold text-sm flex items-center gap-1">Bảng điều khiển GV <i data-lucide="arrow-right" class="w-4 h-4"></i></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: HỌC SINH (THAM GIA THI) ================= -->
+        <div id="view-student" class="view-section hidden max-w-xl mx-auto">
+            <!-- Bước 1: Nhập mã tham gia -->
+            <div id="student-step-join" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                        <i data-lucide="key-round" class="w-6 h-6"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-slate-900">THAM GIA PHÒNG THI</h3>
+                    <p class="text-sm text-slate-500">Nhập mã tham gia và thông tin cá nhân của bạn</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">MÃ THAM GIA</label>
+                        <input type="text" id="join-code" placeholder="Ví dụ: 882211" class="w-full px-4 py-3 border rounded-xl text-base uppercase tracking-wider font-bold focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">HỌ VÀ TÊN</label>
+                        <input type="text" id="student-name" placeholder="Nguyễn Văn A" class="w-full px-4 py-3 border rounded-xl text-base focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">LỚP</label>
+                        <input type="text" id="student-class" placeholder="9A1" class="w-full px-4 py-3 border rounded-xl text-base focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <button onclick="verifyJoinCode()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+                        <i data-lucide="rocket" class="w-5 h-5"></i> VÀO PHÒNG THI
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bước 2: Xác nhận phòng thi hợp lệ -->
+            <div id="student-step-info" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 hidden">
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl mb-6 flex items-start gap-3">
+                    <i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600 shrink-0 mt-0.5"></i>
+                    <div>
+                        <h4 class="font-bold">PHÒNG THI HỢP LỆ</h4>
+                        <p class="text-sm text-emerald-700">Thông tin bài thi đã sẵn sàng.</p>
+                    </div>
+                </div>
+                <div class="space-y-3 mb-6 bg-slate-50 p-4 rounded-xl text-sm">
+                    <div class="flex justify-between"><span class="text-slate-500">Môn học:</span> <span id="info-subject" class="font-bold">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Tiêu đề:</span> <span id="info-title" class="font-bold">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Số câu hỏi:</span> <span id="info-num-q" class="font-bold">--</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Thời gian:</span> <span id="info-duration" class="font-bold">-- phút</span></div>
+                    <div class="flex justify-between"><span class="text-slate-500">Mã đề:</span> <span id="info-exam-code" class="font-bold text-indigo-600">--</span></div>
+                </div>
+                <button onclick="startExam()" class="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-100 flex items-center justify-center gap-2">
+                    <i data-lucide="play" class="w-5 h-5"></i> BẮT ĐẦU LÀM BÀI
+                </button>
+            </div>
+
+            <!-- Bước 3: Giao diện làm bài -->
+            <div id="student-step-exam" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 hidden">
+                <div class="flex justify-between items-center pb-4 border-b border-slate-100 mb-6">
+                    <div>
+                        <h4 id="exam-ui-title" class="font-bold text-slate-800">Bài thi</h4>
+                        <p id="exam-ui-student" class="text-xs text-slate-500">Học sinh: --</p>
+                    </div>
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-xl flex items-center gap-2 font-mono font-bold text-lg">
+                        <i data-lucide="timer" class="w-5 h-5 text-amber-600"></i>
+                        <span id="timer-countdown">00:00</span>
+                    </div>
+                </div>
+
+                <div id="exam-questions-container" class="space-y-6 mb-8 max-h-[60vh] overflow-y-auto pr-2">
+                    <!-- Dynamic Questions -->
+                </div>
+
+                <button onclick="submitExam()" class="w-full bg-indigo-600 text-white py-3.5 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 flex items-center justify-center gap-2">
+                    <i data-lucide="send" class="w-5 h-5"></i> NỘP BÀI THI
+                </button>
+            </div>
+
+            <!-- Bước 4: Kết quả sau khi nộp -->
+            <div id="student-step-result" class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200 text-center hidden">
+                <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="award" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-slate-900 mb-1">🎉 ĐÃ NỘP BÀI THÀNH CÔNG</h3>
+                <p id="result-student-info" class="text-slate-600 mb-6">Nguyễn Văn A - Lớp 9A1</p>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="text-xs text-slate-500 block mb-1">ĐIỂM SỐ</span>
+                        <span id="result-score" class="text-3xl font-extrabold text-indigo-600">8.5</span>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                        <span class="text-xs text-slate-500 block mb-1">ĐÚNG / TỔNG</span>
+                        <span id="result-correct" class="text-2xl font-bold text-slate-800">25/30</span>
+                    </div>
+                </div>
+                <button onclick="location.reload()" class="bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-semibold text-sm hover:bg-slate-300 transition">Làm bài khác / Thoát</button>
+            </div>
+        </div>
+
+        <!-- ================= VIEW: GIÁO VIÊN (DASHBOARD) ================= -->
+        <div id="view-teacher" class="view-section hidden space-y-6">
+            <!-- Thống kê tổng quan -->
+            <div class="grid sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Tổng học sinh nộp bài</p>
+                        <h4 id="stat-total-students" class="text-3xl font-extrabold text-slate-800 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center"><i data-lucide="users" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Phòng thi đang mở</p>
+                        <h4 id="stat-active-rooms" class="text-3xl font-extrabold text-slate-800 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center"><i data-lucide="file-text" class="w-6 h-6"></i></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Ngân hàng câu hỏi</p>
+                        <h4 id="stat-total-questions" class="text-3xl font-extrabold text-slate-800 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center"><i data-lucide="database" class="w-6 h-6"></i></div>
+                </div>
+            </div>
+
+            <!-- Thanh điều hướng giáo viên -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
+                <button onclick="switchTeacherTab('rooms')" id="t-tab-rooms" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white transition flex items-center gap-2">
+                    <i data-lucide="door-open" class="w-4 h-4"></i> Quản lý Phòng Thi
+                </button>
+                <button onclick="switchTeacherTab('banks')" id="t-tab-banks" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition flex items-center gap-2">
+                    <i data-lucide="library" class="w-4 h-4"></i> Ngân hàng Câu hỏi & Môn học
+                </button>
+                <button onclick="switchTeacherTab('results')" id="t-tab-results" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition flex items-center gap-2">
+                    <i data-lucide="bar-chart-3" class="w-4 h-4"></i> Kết quả học sinh & Xuất Excel
+                </button>
+            </div>
+
+            <!-- Tab 1: Quản lý Phòng Thi -->
+            <div id="teacher-content-rooms" class="teacher-tab-content space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-slate-800">Danh sách Phòng Thi</h3>
+                    <button onclick="openCreateRoomModal()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-700 transition flex items-center gap-2 shadow-sm">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Tạo phòng thi mới
+                    </button>
+                </div>
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200">
+                                <th class="p-4">Tiêu đề / Môn</th>
+                                <th class="p-4">Mã tham gia</th>
+                                <th class="p-4">Mã đề</th>
+                                <th class="p-4">Thời gian</th>
+                                <th class="p-4">Trạng thái</th>
+                                <th class="p-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rooms-table-body" class="text-sm divide-y divide-slate-100">
+                            <!-- Dữ liệu phòng thi -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Ngân hàng câu hỏi -->
+            <div id="teacher-content-banks" class="teacher-tab-content space-y-4 hidden">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <h3 class="text-lg font-bold text-slate-800">Ngân hàng Câu hỏi & Nhập dữ liệu (CSV/Excel)</h3>
+                    <div class="flex gap-2">
+                        <label class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition cursor-pointer flex items-center gap-2 shadow-sm">
+                            <i data-lucide="upload" class="w-4 h-4"></i> 📂 Tải file câu hỏi (CSV/Excel)
+                            <input type="file" id="import-file" accept=".csv, .xlsx, .xls" class="hidden" onchange="importQuestionsFile(event)">
+                        </label>
+                        <button onclick="restoreDefaultQuestions()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-300 transition flex items-center gap-2">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Khôi phục mẫu
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-500 mb-3">Định dạng file CSV/Excel chuẩn gồm các cột: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-indigo-600 font-mono">CauHoi, A, B, C, D, DapAn, MonHoc</code> (DapAn điền A, B, C hoặc D).</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200">
+                                    <th class="p-3">Môn học</th>
+                                    <th class="p-3">Nội dung câu hỏi</th>
+                                    <th class="p-3">Đáp án A</th>
+                                    <th class="p-3">Đáp án B</th>
+                                    <th class="p-3">Đáp án C</th>
+                                    <th class="p-3">Đáp án D</th>
+                                    <th class="p-3">Đúng</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questions-bank-table" class="text-xs divide-y divide-slate-100">
+                                <!-- Danh sách câu hỏi -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Kết quả học sinh & Xuất Excel -->
+            <div id="teacher-content-results" class="teacher-tab-content space-y-4 hidden">
+                <div class="flex flex-wrap justify-between items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-lg font-bold text-slate-800">Kết quả Bài thi</h3>
+                        <select id="filter-room-select" onchange="renderTeacherResults()" class="px-3 py-2 border rounded-xl text-sm font-semibold bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="">-- Tất cả phòng thi --</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="relative">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                            <input type="text" id="search-student-result" oninput="renderTeacherResults()" placeholder="Tìm học sinh..." class="pl-9 pr-4 py-2 border rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <button onclick="exportExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700 transition flex items-center gap-2 shadow-sm">
+                            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> 📊 Xuất Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 text-slate-500 text-xs font-semibold uppercase border-b border-slate-200">
+                                <th class="p-4">STT</th>
+                                <th class="p-4">Họ tên</th>
+                                <th class="p-4">Lớp</th>
+                                <th class="p-4">Phòng / Môn</th>
+                                <th class="p-4">Mã đề</th>
+                                <th class="p-4">Đúng</th>
+                                <th class="p-4">Điểm</th>
+                                <th class="p-4">Thời gian nộp</th>
+                                <th class="p-4 text-right">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-table-body" class="text-sm divide-y divide-slate-100">
+                            <!-- Kết quả -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Tạo Phòng Thi -->
+    <div id="create-room-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-indigo-600 flex items-center gap-2">
+                <i data-lucide="plus-circle"></i> Tạo Phòng Thi Mới
+            </h3>
+            <div class="space-y-3 text-sm">
+                <div>
+                    <label class="block font-semibold text-slate-600 mb-1">📚 Chọn môn học THCS</label>
+                    <select id="room-subject" class="w-full px-3 py-2 border rounded-xl bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                        <option value="Ngữ văn">📖 Ngữ văn</option>
+                        <option value="Toán">🔢 Toán</option>
+                        <option value="Khoa học tự nhiên">🔬 Khoa học tự nhiên</option>
+                        <option value="Lịch sử và Địa lí">🌍 Lịch sử và Địa lí</option>
+                        <option value="Tiếng Anh">🇬🇧 Tiếng Anh</option>
+                        <option value="Tin học">💻 Tin học</option>
+                        <option value="Công nghệ">⚙️ Công nghệ</option>
+                        <option value="GDTC">🏃 GDTC</option>
+                        <option value="Nghệ thuật">🎵 Nghệ thuật</option>
+                        <option value="GDCD">🧑‍⚖️ GDCD</option>
+                        <option value="Lịch sử">🗺️ Lịch sử</option>
+                        <option value="Địa lí">🌏 Địa lí</option>
+                        <option value="Hóa học">⚗️ Hóa học</option>
+                        <option value="Vật lí">⚛️ Vật lí</option>
+                        <option value="Sinh học">🧬 Sinh học</option>
+                        <option value="Hoạt động Trải nghiệm, Hướng nghiệp">🎨 Hoạt động Trải nghiệm, Hướng nghiệp</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-600 mb-1">Tên tiêu đề bài thi</label>
+                    <input type="text" id="room-title" placeholder="Kiểm tra 15 phút Vật lí 9" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Số lượng câu hỏi</label>
+                        <input type="number" id="room-num-q" value="10" min="1" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Thời gian (phút)</label>
+                        <input type="number" id="room-duration" value="15" min="1" class="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-2">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="room-shuffle-q" checked class="w-4 h-4 text-indigo-600 rounded"> Trộn câu hỏi
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="room-shuffle-a" checked class="w-4 h-4 text-indigo-600 rounded"> Trộn đáp án
+                    </label>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-4 border-t">
+                <button onclick="closeCreateRoomModal()" class="px-4 py-2 rounded-xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200">Hủy</button>
+                <button onclick="createRoomSubmit()" class="px-5 py-2 rounded-xl text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm">Tạo phòng & Sinh mã</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center py-6 text-xs text-slate-400 border-t border-slate-200 mt-auto">
+        GV NCT PRO ONLINE &copy; 2026 - Nền tảng khảo thí trực tuyến THCS chuẩn thông tư.
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Khởi tạo Lucide Icons
+        lucide.createIcons();
+
+        // Cấu hình Supabase & State ứng dụng
+        let supabaseClient = null;
+        let useSupabase = false;
+
+        // Mock Data / Local State khi chưa cấu hình Supabase hoặc chạy offline
+        let appData = {
+            questions: [
+                { id: 1, mon: "Khoa học tự nhiên", noi_dung: "Vận tốc được tính bằng công thức nào?", a: "s/t", b: "s*t", c: "t/s", d: "s+t", dap_an: "A" },
+                { id: 2, mon: "Khoa học tự nhiên", noi_dung: "Đơn vị của lực là gì?", a: "J", b: "W", c: "N", d: "Pa", dap_an: "C" },
+                { id: 3, mon: "Khoa học tự nhiên", noi_dung: "Khối lượng riêng được tính bằng?", a: "m/V", b: "V/m", c: "m*V", d: "m+V", dap_an: "A" },
+                { id: 4, mon: "Toán", noi_dung: "Căn bậc hai số học của 16 là?", a: "-4", b: "4", c: "8", d: "-8", dap_an: "B" },
+                { id: 5, mon: "Ngữ văn", noi_dung: "Tác phẩm 'Truyện Kiều' của ai?", a: "Nguyễn Trãi", b: "Nguyễn Du", c: "Hồ Xuân Hương", d: "Bà Huyện Thanh Quan", dap_an: "B" }
+            ],
+            rooms: [
+                { id: "r1", subject: "Khoa học tự nhiên", title: "Kiểm tra 15 phút KHTN 9", join_code: "882211", exam_code: "102", num_q: 3, duration: 15, shuffle_q: true, shuffle_a: true, is_active: true }
+            ],
+            submissions: [
+                { id: "s1", room_id: "r1", student_name: "Nguyễn Văn A", student_class: "9A1", exam_code: "102", correct: 3, total: 3, score: 10.0, submit_time: "21:34 18/08/2026" }
+            ]
+        };
+
+        // Khởi động ứng dụng
+        window.onload = function() {
+            loadLocalStorageData();
+            initSupabaseFromStorage();
+            renderQuestionsBank();
+            renderTeacherRooms();
+            renderTeacherResults();
+            updateDashboardStats();
+        };
+
+        function loadLocalStorageData() {
+            const saved = localStorage.getItem("gvnct_app_data");
+            if (saved) {
+                try { appData = JSON.parse(saved); } catch(e) {}
+            }
+        }
+
+        function saveLocalStorageData() {
+            localStorage.setItem("gvnct_app_data", JSON.stringify(appData));
+            updateDashboardStats();
+        }
+
+        // Cấu hình Supabase
+        function openConfigModal() {
+            document.getElementById("supabase-modal").classList.remove("hidden");
+            document.getElementById("sb-url").value = localStorage.getItem("gvnct_sb_url") || "";
+            document.getElementById("sb-key").value = localStorage.getItem("gvnct_sb_key") || "";
+        }
+
+        function saveSupabaseConfig() {
+            const url = document.getElementById("sb-url").value.trim();
+            const key = document.getElementById("sb-key").value.trim();
+            if (url && key) {
+                localStorage.setItem("gvnct_sb_url", url);
+                localStorage.setItem("gvnct_sb_key", key);
+                initSupabaseFromStorage();
+                alert("Đã lưu và kết nối Supabase thành công!");
+                document.getElementById("supabase-modal").classList.add("hidden");
+            } else {
+                alert("Vui lòng nhập đầy đủ URL và Key.");
+            }
+        }
+
+        function initSupabaseFromStorage() {
+            const url = localStorage.getItem("gvnct_sb_url");
+            const key = localStorage.getItem("gvnct_sb_key");
+            if (url && key && window.supabase) {
+                try {
+                    supabaseClient = window.supabase.createClient(url, key);
+                    useSupabase = true;
+                } catch(e) {
+                    useSupabase = false;
+                }
+            }
+        }
+
+        // Điều hướng Role & Views
+        function switchRole(role) {
+            const studentBtn = document.getElementById("btn-role-student");
+            const teacherBtn = document.getElementById("btn-role-teacher");
+            const homeView = document.getElementById("view-home");
+            const studentView = document.getElementById("view-student");
+            const teacherView = document.getElementById("view-teacher");
+
+            homeView.classList.add("hidden");
+            studentView.classList.add("hidden");
+            teacherView.classList.add("hidden");
+
+            if (role === 'student') {
+                studentBtn.className = "px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm";
+                teacherBtn.className = "px-3 py-1.5 rounded-lg transition text-white hover:bg-white/10";
+                studentView.classList.remove("hidden");
+                showStudentJoin();
+            } else if (role === 'teacher') {
+                teacherBtn.className = "px-3 py-1.5 rounded-lg transition bg-white text-indigo-700 font-bold shadow-sm";
+                studentBtn.className = "px-3 py-1.5 rounded-lg transition text-white hover:bg-white/10";
+                teacherView.classList.remove("hidden");
+                updateDashboardStats();
+            }
+        }
+
+        function switchView(viewName) {
+            if (viewName === 'home') {
+                document.getElementById("view-home").classList.remove("hidden");
+                document.getElementById("view-student").classList.add("hidden");
+                document.getElementById("view-teacher").classList.add("hidden");
+            }
+        }
+
+        // Chuyển tab giáo viên
+        function switchTeacherTab(tab) {
+            ['rooms', 'banks', 'results'].forEach(t => {
+                document.getElementById(`teacher-content-${t}`).classList.add("hidden");
+                document.getElementById(`t-tab-${t}`).className = "px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition flex items-center gap-2";
+            });
+            document.getElementById(`teacher-content-${tab}`).classList.remove("hidden");
+            document.getElementById(`t-tab-${tab}`).className = "px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white transition flex items-center gap-2";
+        }
+
+        // Thống kê Dashboard
+        function updateDashboardStats() {
+            document.getElementById("stat-total-students").innerText = appData.submissions.length;
+            document.getElementById("stat-active-rooms").innerText = appData.rooms.filter(r => r.is_active).length;
+            document.getElementById("stat-total-questions").innerText = appData.questions.length;
+        }
+
+        // ================= HỌC SINH LOGIC =================
+        function showStudentJoin() {
+            document.getElementById("student-step-join").classList.remove("hidden");
+            document.getElementById("student-step-info").classList.add("hidden");
+            document.getElementById("student-step-exam").classList.add("hidden");
+            document.getElementById("student-step-result").classList.add("hidden");
+        }
+
+        let currentActiveRoom = null;
+        let currentStudentInfo = {};
+        let examTimerInterval = null;
+
+        function verifyJoinCode() {
+            const code = document.getElementById("join-code").value.trim().toUpperCase();
+            const name = document.getElementById("student-name").value.trim();
+            const clas = document.getElementById("student-class").value.trim();
+
+            if (!code || !name || !clas) {
+                alert("Vui lòng nhập đầy đủ Mã tham gia, Họ tên và Lớp.");
+                return;
+            }
+
+            const room = appData.rooms.find(r => r.join_code === code && r.is_active);
+            if (!room) {
+                alert("Mã tham gia không tồn tại hoặc phòng thi đã đóng!");
+                return;
+            }
+
+            currentActiveRoom = room;
+            currentStudentInfo = { name, class: clas, room_id: room.id };
+
+            document.getElementById("info-subject").innerText = room.subject;
+            document.getElementById("info-title").innerText = room.title;
+            document.getElementById("info-num-q").innerText = room.num_q;
+            document.getElementById("info-duration").innerText = room.duration;
+            document.getElementById("info-exam-code").innerText = room.exam_code;
+
+            document.getElementById("student-step-join").classList.add("hidden");
+            document.getElementById("student-step-info").classList.remove("hidden");
+        }
+
+        let examQuestionsList = [];
+        let studentAnswers = {};
+        let timeRemaining = 0;
+
+        function startExam() {
+            document.getElementById("student-step-info").classList.add("hidden");
+            document.getElementById("student-step-exam").classList.remove("hidden");
+
+            document.getElementById("exam-ui-title").innerText = currentActiveRoom.title;
+            document.getElementById("exam-ui-student").innerText = `Học sinh: ${currentStudentInfo.name} - Lớp ${currentStudentInfo.class}`;
+
+            // Lọc câu hỏi theo môn của phòng thi
+            let pool = appData.questions.filter(q => q.mon === currentActiveRoom.subject);
+            if (pool.length === 0) pool = [...appData.questions]; // fallback nếu chưa đủ môn
+
+            if (currentActiveRoom.shuffle_q) {
+                pool.sort(() => Math.random() - 0.5);
+            }
+
+            examQuestionsList = pool.slice(0, currentActiveRoom.num_q);
+            studentAnswers = {};
+
+            // Render câu hỏi
+            let html = "";
+            examQuestionsList.forEach((q, idx) => {
+                let opts = [
+                    { key: 'A', text: q.a },
+                    { key: 'B', text: q.b },
+                    { key: 'C', text: q.c },
+                    { key: 'D', text: q.d }
+                ];
+                if (currentActiveRoom.shuffle_a) {
+                    opts.sort(() => Math.random() - 0.5);
+                }
+
+                html += `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <p class="font-semibold text-slate-800 mb-3">Câu ${idx + 1}: ${q.noi_dung}</p>
+                        <div class="grid sm:grid-cols-2 gap-2">
+                `;
+                opts.forEach(opt => {
+                    html += `
+                        <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-400 transition">
+                            <input type="radio" name="q_${idx}" value="${opt.key}" onchange="studentAnswers[${idx}]='${opt.key}'" class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm"><b>${opt.key}.</b> ${opt.text}</span>
+                        </label>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            document.getElementById("exam-questions-container").innerHTML = html;
+
+            // Đếm ngược thời gian
+            timeRemaining = currentActiveRoom.duration * 60;
+            clearInterval(examTimerInterval);
+            examTimerInterval = setInterval(() => {
+                timeRemaining--;
+                let m = Math.floor(timeRemaining / 60);
+                let s = timeRemaining % 60;
+                document.getElementById("timer-countdown").innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+                if (timeRemaining <= 0) {
+                    clearInterval(examTimerInterval);
+                    alert("Đã hết thời gian làm bài! Hệ thống tự động nộp.");
+                    submitExam();
+                }
+            }, 1000);
+        }
+
+        function submitExam() {
+            clearInterval(examTimerInterval);
+            let correctCount = 0;
+            examQuestionsList.forEach((q, idx) => {
+                if (studentAnswers[idx] === q.dap_an) {
+                    correctCount++;
+                }
+            });
+
+            let totalQ = examQuestionsList.length;
+            let score = Number(((correctCount / totalQ) * 10).toFixed(2));
+            let nowStr = new Date().toLocaleTimeString('vi-VN', {hour: '2-digit', minute:'2-digit'}) + ' ' + new Date().toLocaleDateString('vi-VN');
+
+            let submission = {
+                id: 'sub_' + Date.now(),
+                room_id: currentActiveRoom.id,
+                room_title: currentActiveRoom.title,
+                subject: currentActiveRoom.subject,
+                student_name: currentStudentInfo.name,
+                student_class: currentStudentInfo.class,
+                exam_code: currentActiveRoom.exam_code,
+                correct: correctCount,
+                total: totalQ,
+                score: score,
+                submit_time: nowStr
+            };
+
+            appData.submissions.unshift(submission);
+            saveLocalStorageData();
+            renderTeacherResults();
+
+            document.getElementById("student-step-exam").classList.add("hidden");
+            document.getElementById("student-step-result").classList.remove("hidden");
+            document.getElementById("result-student-info").innerText = `${currentStudentInfo.name} - Lớp ${currentStudentInfo.class}`;
+            document.getElementById("result-score").innerText = score;
+            document.getElementById("result-correct").innerText = `${correctCount}/${totalQ}`;
+        }
+
+        // ================= GIÁO VIÊN LOGIC =================
+        function renderQuestionsBank() {
+            let html = "";
+            appData.questions.forEach(q => {
+                html += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-3 font-semibold text-indigo-600">${q.mon}</td>
+                        <td class="p-3">${q.noi_dung}</td>
+                        <td class="p-3">${q.a}</td>
+                        <td class="p-3">${q.b}</td>
+                        <td class="p-3">${q.c}</td>
+                        <td class="p-3">${q.d}</td>
+                        <td class="p-3 font-bold text-emerald-600">${q.dap_an}</td>
+                    </tr>
+                `;
+            });
+            document.getElementById("questions-bank-table").innerHTML = html || '<tr><td colspan="7" class="p-4 text-center text-slate-400">Chưa có câu hỏi nào.</td></tr>';
+        }
+
+        function restoreDefaultQuestions() {
+            appData.questions = [
+                { id: 1, mon: "Khoa học tự nhiên", noi_dung: "Vận tốc được tính bằng công thức nào?", a: "s/t", b: "s*t", c: "t/s", d: "s+t", dap_an: "A" },
+                { id: 2, mon: "Khoa học tự nhiên", noi_dung: "Đơn vị của lực là gì?", a: "J", b: "W", c: "N", d: "Pa", dap_an: "C" },
+                { id: 3, mon: "Khoa học tự nhiên", noi_dung: "Khối lượng riêng được tính bằng?", a: "m/V", b: "V/m", c: "m*V", d: "m+V", dap_an: "A" },
+                { id: 4, mon: "Toán", noi_dung: "Căn bậc hai số học của 16 là?", a: "-4", b: "4", c: "8", d: "-8", dap_an: "B" },
+                { id: 5, mon: "Ngữ văn", noi_dung: "Tác phẩm 'Truyện Kiều' của ai?", a: "Nguyễn Trãi", b: "Nguyễn Du", c: "Hồ Xuân Hương", d: "Bà Huyện Thanh Quan", dap_an: "B" }
+            ];
+            saveLocalStorageData();
+            renderQuestionsBank();
+            alert("Đã khôi phục ngân hàng câu hỏi mẫu!");
+        }
+
+        // Nhập file CSV / Excel bằng SheetJS
+        function importQuestionsFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.SheetNames[0];
+                    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+                    
+                    let count = 0;
+                    rows.forEach(r => {
+                        if (r.CauHoi || r.noi_dung) {
+                            appData.questions.push({
+                                id: Date.now() + Math.random(),
+                                mon: r.MonHoc || r.mon || "Khoa học tự nhiên",
+                                noi_dung: r.CauHoi || r.noi_dung,
+                                a: r.A || r.a,
+                                b: r.B || r.b,
+                                c: r.C || r.c,
+                                d: r.D || r.d,
+                                dap_an: String(r.DapAn || r.dap_an || "A").toUpperCase()
+                            });
+                            count++;
+                        }
+                    });
+                    saveLocalStorageData();
+                    renderQuestionsBank();
+                    alert(`Đã nhập thành công ${count} câu hỏi vào ngân hàng!`);
+                } catch(err) {
+                    alert("Lỗi đọc file: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Quản lý phòng thi
+        function renderTeacherRooms() {
+            let html = "";
+            let selectHtml = '<option value="">-- Tất cả phòng thi --</option>';
+            appData.rooms.forEach(r => {
+                selectHtml += `<option value="${r.id}">${r.title} (${r.subject})</option>`;
+                html += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-4 font-semibold text-slate-800">${r.title}<br><span class="text-xs text-indigo-600 font-normal">${r.subject}</span></td>
+                        <td class="p-4 font-mono font-bold text-indigo-600">${r.join_code}</td>
+                        <td class="p-4 font-mono">${r.exam_code}</td>
+                        <td class="p-4">${r.duration} phút</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${r.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}">
+                                ${r.is_active ? 'Đang mở' : 'Đã đóng'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-right space-x-2">
+                            <button onclick="toggleRoomStatus('${r.id}')" class="text-xs px-3 py-1.5 rounded-lg border font-semibold ${r.is_active ? 'text-amber-600 border-amber-200 hover:bg-amber-50' : 'text-emerald-600 border-emerald-200 hover:bg-emerald-50'}">
+                                ${r.is_active ? 'Đóng phòng' : 'Mở phòng'}
+                            </button>
+                            <button onclick="deleteRoom('${r.id}')" class="text-xs px-2.5 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById("rooms-table-body").innerHTML = html || '<tr><td colspan="6" class="p-4 text-center text-slate-400">Chưa có phòng thi nào.</td></tr>';
+            document.getElementById("filter-room-select").innerHTML = selectHtml;
+        }
+
+        function openCreateRoomModal() {
+            document.getElementById("create-room-modal").classList.remove("hidden");
+        }
+        function closeCreateRoomModal() {
+            document.getElementById("create-room-modal").classList.add("hidden");
+        }
+
+        function createRoomSubmit() {
+            const subject = document.getElementById("room-subject").value;
+            const title = document.getElementById("room-title").value.trim() || `Kiểm tra ${subject}`;
+            const num_q = parseInt(document.getElementById("room-num-q").value) || 10;
+            const duration = parseInt(document.getElementById("room-duration").value) || 15;
+            const shuffle_q = document.getElementById("room-shuffle-q").checked;
+            const shuffle_a = document.getElementById("room-shuffle-a").checked;
+
+            const newRoom = {
+                id: 'room_' + Date.now(),
+                subject,
+                title,
+                join_code: Math.floor(100000 + Math.random() * 900000).toString(),
+                exam_code: Math.floor(100 + Math.random() * 900).toString(),
+                num_q,
+                duration,
+                shuffle_q,
+                shuffle_a,
+                is_active: true
+            };
+
+            appData.rooms.push(newRoom);
+            saveLocalStorageData();
+            renderTeacherRooms();
+            closeCreateRoomModal();
+            alert(`Tạo phòng thành công! Mã tham gia: ${newRoom.join_code}`);
+        }
+
+        function toggleRoomStatus(id) {
+            const room = appData.rooms.find(r => r.id === id);
+            if (room) {
+                room.is_active = !room.is_active;
+                saveLocalStorageData();
+                renderTeacherRooms();
+            }
+        }
+
+        function deleteRoom(id) {
+            if (confirm("Bạn có chắc muốn xóa phòng thi này?")) {
+                appData.rooms = appData.rooms.filter(r => r.id !== id);
+                saveLocalStorageData();
+                renderTeacherRooms();
+            }
+        }
+
+        // Kết quả & Xuất Excel
+        function renderTeacherResults() {
+            const filterRoomId = document.getElementById("filter-room-select").value;
+            const searchTerm = document.getElementById("search-student-result").value.toLowerCase();
+
+            let filtered = appData.submissions.filter(s => {
+                let matchRoom = !filterRoomId || s.room_id === filterRoomId;
+                let matchSearch = !searchTerm || s.student_name.toLowerCase().includes(searchTerm) || s.student_class.toLowerCase().includes(searchTerm);
+                return matchRoom && matchSearch;
+            });
+
+            let html = "";
+            filtered.forEach((s, idx) => {
+                html += `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="p-4">${idx + 1}</td>
+                        <td class="p-4 font-semibold text-slate-800">${s.student_name}</td>
+                        <td class="p-4">${s.student_class}</td>
+                        <td class="p-4 text-xs text-slate-500">${s.room_title || '--'}<br><span class="font-semibold text-indigo-600">${s.subject || ''}</span></td>
+                        <td class="p-4 font-mono">${s.exam_code}</td>
+                        <td class="p-4">${s.correct}/${s.total}</td>
+                        <td class="p-4 font-bold text-indigo-600">${s.score}</td>
+                        <td class="p-4 text-xs text-slate-500">${s.submit_time}</td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteSubmission('${s.id}')" class="text-xs px-2.5 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50">Hủy bài</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            document.getElementById("results-table-body").innerHTML = html || '<tr><td colspan="9" class="p-4 text-center text-slate-400">Chưa có kết quả học sinh.</td></tr>';
+        }
+
+        function deleteSubmission(id) {
+            if (confirm("Bạn có chắc muốn hủy bài làm này của học sinh?")) {
+                appData.submissions = appData.submissions.filter(s => s.id !== id);
+                saveLocalStorageData();
+                renderTeacherResults();
+            }
+        }
+
+        function exportExcel() {
+            if (appData.submissions.length === 0) {
+                alert("Không có dữ liệu kết quả để xuất Excel.");
+                return;
+            }
+
+            let exportData = appData.submissions.map((s, idx) => ({
+                "STT": idx + 1,
+                "Họ tên": s.student_name,
+                "Lớp": s.student_class,
+                "Môn": s.subject || "KHTN",
+                "Phòng thi": s.room_title || "",
+                "Mã đề": s.exam_code,
+                "Số câu đúng": s.correct,
+                "Tổng số câu": s.total,
+                "Điểm": s.score,
+                "Thời gian nộp": s.submit_time
+            }));
+
+            let worksheet = XLSX.utils.json_to_sheet(exportData);
+            let workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "KetQuaThi");
+            XLSX.writeFile(workbook, "Ket_qua_phong_thi_THCS.xlsx");
+        }
+    </script>
+</body>
+</html>
