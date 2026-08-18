@@ -8,11 +8,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Thư viện hỗ trợ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { background-color: #f4f6f9; }
         .table-input { width: 100%; border: 1px solid #dee2e6; padding: 5px; border-radius: 4px; }
-        .table-input:focus { border-color: #0d6efd; outline: none; }
         .nav-tabs .nav-link { font-weight: bold; }
     </style>
 </head>
@@ -21,7 +20,6 @@
 <div class="container mt-4">
     <h2 class="mb-4 text-center">Hệ thống Quản trị Ngân hàng Câu hỏi</h2>
     
-    <!-- Tab Điều hướng -->
     <ul class="nav nav-tabs" id="mainTab" role="tablist">
         <li class="nav-item">
             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#bank" type="button">Ngân hàng câu hỏi</button>
@@ -32,43 +30,53 @@
     </ul>
 
     <div class="tab-content bg-white p-4 border border-top-0 rounded-bottom">
-        
         <!-- Tab 1: Ngân hàng câu hỏi -->
         <div class="tab-pane fade show active" id="bank">
             <h4>Danh sách câu hỏi hiện có</h4>
-            <p class="text-muted">Tính năng quản lý danh sách câu hỏi của bạn sẽ nằm ở đây...</p>
-            <!-- Dán bảng dữ liệu cũ của bạn vào đây -->
+            <div id="tableContainer">Đang tải dữ liệu...</div>
         </div>
 
         <!-- Tab 2: Nhập từ Word -->
         <div class="tab-pane fade" id="import">
             <h4>Nhập câu hỏi từ File Word (.docx)</h4>
-            <div class="mb-3">
-                <label class="form-label">Tải file Word lên:</label>
-                <input type="file" id="wordFile" class="form-control" accept=".docx">
-            </div>
-
+            <input type="file" id="wordFile" class="form-control mb-3" accept=".docx">
             <div id="editorSection" style="display: none;">
-                <div class="alert alert-warning">Vui lòng rà soát nội dung trước khi kết chuyển.</div>
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Câu hỏi</th><th>A</th><th>B</th><th>C</th><th>D</th><th style="width: 8%;">Đ.Án</th><th>Xóa</th>
-                            </tr>
-                        </thead>
-                        <tbody id="questionTableBody"></tbody>
-                    </table>
-                </div>
-                <button class="btn btn-success btn-lg w-100" onclick="saveToBank()">Kết chuyển vào hệ thống</button>
+                <table class="table table-bordered">
+                    <thead class="table-dark">
+                        <tr><th>Câu hỏi</th><th>A</th><th>B</th><th>C</th><th>D</th><th style="width: 10%;">Đ.Án</th><th style="width: 5%;">Xóa</th></tr>
+                    </thead>
+                    <tbody id="questionTableBody"></tbody>
+                </table>
+                <button class="btn btn-success btn-lg w-100" onclick="saveToBank()">Kết chuyển vào Database</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    // --- XỬ LÝ ĐỌC FILE WORD ---
+    // --- CẤU HÌNH SUPABASE (DÁN THÔNG TIN CỦA BẠN VÀO ĐÂY) ---
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL'; 
+    const SUPABASE_KEY = 'YOUR_SUPABASE_KEY';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // --- TẢI DỮ LIỆU KHI MỞ TRANG ---
+    document.addEventListener("DOMContentLoaded", fetchQuestions);
+
+    async function fetchQuestions() {
+        const { data, error } = await supabase.from('questions').select('*');
+        if (error) {
+            document.getElementById('tableContainer').innerHTML = "Lỗi tải dữ liệu: " + error.message;
+            return;
+        }
+        let html = '<table class="table table-striped"><thead><tr><th>Câu hỏi</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Đáp án</th></tr></thead><tbody>';
+        data.forEach(q => {
+            html += `<tr><td>${q.cau_hoi}</td><td>${q.da_a}</td><td>${q.da_b}</td><td>${q.da_c}</td><td>${q.da_d}</td><td>${q.dap_an_dung}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        document.getElementById('tableContainer').innerHTML = html;
+    }
+
+    // --- XỬ LÝ NHẬP TỪ WORD ---
     document.getElementById('wordFile').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if(!file) return;
@@ -85,73 +93,63 @@
         reader.readAsArrayBuffer(file);
     });
 
-    // --- LOGIC BÓC TÁCH VĂN BẢN (REGEX) ---
     function parseWordText(text) {
-        // Tách khối theo từ khóa "Câu 1", "Câu 2"...
         const blocks = text.split(/(?=Câu\s*\d+[:\.]?)/gi);
         let results = [];
         blocks.forEach(block => {
             if (block.trim().length < 15) return;
-            
             const q = block.replace(/Câu\s*\d+[:\.]?/i, "").split(/A[\.\)]/i)[0] || "";
-            const a = block.match(/A[\.\)]\s*(.*?)(?=B[\.\)])/is);
-            const b = block.match(/B[\.\)]\s*(.*?)(?=C[\.\)])/is);
-            const c = block.match(/C[\.\)]\s*(.*?)(?=D[\.\)])/is);
-            const d = block.match(/D[\.\)]\s*(.*?)(?=\n|$)/is);
-
             results.push({
                 q: q.trim(),
-                a: a ? a[1].trim() : "",
-                b: b ? b[1].trim() : "",
-                c: c ? c[1].trim() : "",
-                d: d ? d[1].trim() : "",
-                ans: ""
+                a: (block.match(/A[\.\)]\s*(.*?)(?=B[\.\)])/is) || [])[1] || "",
+                b: (block.match(/B[\.\)]\s*(.*?)(?=C[\.\)])/is) || [])[1] || "",
+                c: (block.match(/C[\.\)]\s*(.*?)(?=D[\.\)])/is) || [])[1] || "",
+                d: (block.match(/D[\.\)]\s*(.*?)(?=\n|$)/is) || [])[1] || ""
             });
         });
         return results;
     }
 
-    // --- HIỂN THỊ DỮ LIỆU ĐỂ SỬA ---
     function renderImportTable(data) {
         const tbody = document.getElementById('questionTableBody');
         tbody.innerHTML = '';
         data.forEach(item => {
-            tbody.insertAdjacentHTML('beforeend', `
-                <tr>
-                    <td><input class="table-input" value="${item.q}"></td>
-                    <td><input class="table-input" value="${item.a}"></td>
-                    <td><input class="table-input" value="${item.b}"></td>
-                    <td><input class="table-input" value="${item.c}"></td>
-                    <td><input class="table-input" value="${item.d}"></td>
-                    <td><input class="table-input" value="${item.ans}" placeholder="A/B/C/D"></td>
-                    <td><button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">X</button></td>
-                </tr>
-            `);
+            tbody.insertAdjacentHTML('beforeend', `<tr>
+                <td><input class="table-input" value="${item.q}"></td>
+                <td><input class="table-input" value="${item.a}"></td>
+                <td><input class="table-input" value="${item.b}"></td>
+                <td><input class="table-input" value="${item.c}"></td>
+                <td><input class="table-input" value="${item.d}"></td>
+                <td><input class="table-input" value="" placeholder="A/B/C/D"></td>
+                <td><button class="btn btn-sm btn-danger" onclick="this.closest('tr').remove()">X</button></td>
+            </tr>`);
         });
     }
 
-    // --- HÀM KẾT CHUYỂN DỮ LIỆU ---
-    function saveToBank() {
+    // --- KẾT CHUYỂN VÀO DATABASE ---
+    async function saveToBank() {
         const rows = document.querySelectorAll('#questionTableBody tr');
         const data = Array.from(rows).map(row => {
             const inputs = row.querySelectorAll('input');
             return {
-                question: inputs[0].value,
-                a: inputs[1].value,
-                b: inputs[2].value,
-                c: inputs[3].value,
-                d: inputs[4].value,
-                correct_answer: inputs[0].value.toUpperCase()
+                cau_hoi: inputs[0].value,
+                da_a: inputs[1].value,
+                da_b: inputs[2].value,
+                da_c: inputs[3].value,
+                da_d: inputs[4].value,
+                dap_an_dung: inputs[5].value.toUpperCase()
             };
         });
 
-        // TODO: DÁN CODE KẾT NỐI DATABASE (SUPABASE/FIREBASE) CỦA BẠN VÀO ĐÂY
-        // Ví dụ: 
-        // const { data, error } = await supabase.from('questions').insert(data);
-        
-        console.log("Dữ liệu đã sẵn sàng để lưu:", data);
-        alert("Đã kết chuyển " + data.length + " câu hỏi thành công!");
+        const { error } = await supabase.from('questions').insert(data);
+        if (error) {
+            alert("Lỗi khi lưu: " + error.message);
+        } else {
+            alert("Kết chuyển thành công!");
+            location.reload(); // Tải lại trang để cập nhật danh sách
+        }
     }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
