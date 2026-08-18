@@ -8,6 +8,8 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Thư viện Mammoth.js để đọc file Word (.docx) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.21/mammoth.browser.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -90,9 +92,7 @@
                         <span id="exam-timer" class="font-extrabold text-amber-600 text-lg">--:--</span>
                     </div>
                 </div>
-
                 <div id="exam-questions-container" class="space-y-4"></div>
-
                 <button onclick="submitExam()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-2xl font-bold text-lg shadow-md transition">NỘP BÀI THI</button>
             </div>
 
@@ -106,15 +106,37 @@
             </div>
         </div>
 
-        <!-- VIEW: LOGIN GIÁO VIÊN -->
+        <!-- VIEW: LOGIN GIÁO VIÊN ĐÃ ĐƯỢC LÀM LẠI THEO ẢNH -->
         <div id="view-login" class="view-section hidden max-w-md mx-auto mt-10">
-            <div class="bg-white p-8 rounded-2xl shadow-sm border text-center">
-                <i data-lucide="shield-alert" class="w-12 h-12 text-indigo-600 mx-auto mb-4"></i>
-                <h3 class="text-xl font-bold mb-2">Khu Vực Dành Cho Giáo Viên</h3>
-                <p class="text-sm text-slate-500 mb-6">Đăng nhập bằng Gmail được cấp quyền để quản lý hệ thống.</p>
-                <button onclick="loginWithGoogle()" class="w-full bg-white border border-slate-300 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition shadow-sm">
+            <div class="bg-white p-8 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-slate-100">
+                <h2 class="text-3xl font-bold text-blue-600 text-center mb-2">Đăng nhập hệ thống</h2>
+                <p class="text-sm text-slate-500 text-center mb-8">Quản lý ngân hàng câu hỏi trắc nghiệm</p>
+
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-2">Địa chỉ Gmail / Email</label>
+                        <input type="email" id="login-email" placeholder="name@example.com" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-800 mb-2">Mật khẩu</label>
+                        <input type="password" id="login-password" placeholder="Mật khẩu của bạn" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+
+                    <button onclick="loginWithEmail()" class="w-full bg-[#1a73e8] hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition duration-200">
+                        Đăng nhập thành viên
+                    </button>
+                </div>
+
+                <div class="flex items-center my-6">
+                    <hr class="flex-grow border-slate-200">
+                    <span class="px-4 text-sm text-slate-500 bg-white">Hoặc</span>
+                    <hr class="flex-grow border-slate-200">
+                </div>
+
+                <button onclick="loginWithGoogle()" class="w-full bg-white border border-[#ea4335] text-[#ea4335] py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-red-50 transition duration-200">
                     <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    Đăng nhập bằng Gmail
+                    Đăng nhập bằng tài khoản Gmail
                 </button>
             </div>
         </div>
@@ -124,7 +146,7 @@
             <div class="bg-amber-50 p-8 rounded-2xl shadow-sm border border-amber-200 text-center">
                 <i data-lucide="clock" class="w-12 h-12 text-amber-600 mx-auto mb-4"></i>
                 <h3 class="text-xl font-bold mb-2 text-amber-800">Tài khoản đang chờ duyệt</h3>
-                <p class="text-sm text-amber-700 mb-6">Tài khoản Gmail của bạn đã đăng nhập thành công nhưng chưa được cấp quyền quản lý.</p>
+                <p class="text-sm text-amber-700 mb-6">Tài khoản của bạn đã đăng nhập thành công nhưng chưa được cấp quyền quản lý.</p>
                 <button onclick="handleLogout()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2.5 rounded-xl font-bold transition">Đăng xuất</button>
             </div>
         </div>
@@ -133,13 +155,18 @@
         <div id="view-teacher" class="view-section hidden space-y-6">
             <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-3">
                 <button onclick="switchTeacherTab('rooms')" id="t-tab-rooms" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm">Quản lý Phòng Thi</button>
-                <button onclick="switchTeacherTab('banks')" id="t-tab-banks" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Ngân hàng Câu hỏi</button>
+                <button onclick="switchTeacherTab('banks')" id="t-tab-banks" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Ngân hàng C.Hỏi (Excel)</button>
+                
+                <!-- NÚT TÍCH HỢP CHỨC NĂNG NHẬP WORD -->
+                <button onclick="switchTeacherTab('word')" id="t-tab-word" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 shadow-sm transition flex items-center gap-1"><i data-lucide="file-text" class="w-4 h-4"></i> Nhập Đề Từ Word</button>
+                
                 <button onclick="switchTeacherTab('results')" id="t-tab-results" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Kết quả</button>
                 <button onclick="switchTeacherTab('admin')" id="t-tab-admin" class="hidden px-4 py-2 rounded-xl text-sm font-bold bg-red-100 text-red-600 border border-red-200 flex items-center gap-1.5"><i data-lucide="shield" class="w-4 h-4"></i> Quản trị User</button>
             </div>
 
             <!-- TAB 1: PHÒNG THI -->
             <div id="teacher-content-rooms" class="teacher-tab-content space-y-6">
+                <!-- Nội dung quản lý phòng thi giữ nguyên như cũ -->
                 <div class="bg-white p-6 rounded-2xl border shadow-sm">
                     <h3 class="font-bold text-lg mb-4 text-slate-900">Tạo Phòng Thi Mới</h3>
                     <div class="grid sm:grid-cols-4 gap-4">
@@ -162,7 +189,7 @@
                 </div>
             </div>
             
-            <!-- TAB 2: NGÂN HÀNG CÂU HỎI -->
+            <!-- TAB 2: NGÂN HÀNG CÂU HỎI (EXCEL) -->
             <div id="teacher-content-banks" class="teacher-tab-content space-y-6 hidden">
                 <div class="bg-white p-6 rounded-2xl border shadow-sm">
                     <h3 class="font-bold text-lg mb-4 text-slate-900">Tải Lên Ngân Hàng Câu Hỏi (Excel / CSV)</h3>
@@ -183,6 +210,32 @@
                         </thead>
                         <tbody id="banks-table-body" class="divide-y divide-slate-100"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- TAB TÍCH HỢP: NHẬP ĐỀ TỪ WORD -->
+            <div id="teacher-content-word" class="teacher-tab-content space-y-6 hidden">
+                <div class="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm">
+                    <h3 class="font-bold text-lg mb-2 text-blue-700 flex items-center gap-2"><i data-lucide="file-text"></i> Tự Động Sinh Đề Từ File Word (.docx)</h3>
+                    <p class="text-sm text-slate-600 mb-6">Hệ thống sẽ đọc file Word, phân tích câu hỏi và tự động chuyển vào ngân hàng đề thi. Không cần qua bước tạo Excel thủ công.</p>
+                    
+                    <div class="grid sm:grid-cols-3 gap-4 mb-4">
+                        <input type="text" id="word-title-input" placeholder="Tên bộ đề mới (VD: Kiểm tra 15p)" class="px-4 py-2.5 border rounded-xl text-sm">
+                        <input type="text" id="word-subject-input" placeholder="Môn học (VD: Vật Lý)" class="px-4 py-2.5 border rounded-xl text-sm">
+                        <input type="file" id="word-file-input" accept=".docx" class="px-3 py-2 border rounded-xl text-sm file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+                    </div>
+                    
+                    <div class="bg-slate-50 p-4 rounded-xl border mb-4">
+                        <h4 class="font-semibold text-sm mb-2 text-slate-700">Định dạng file Word yêu cầu:</h4>
+                        <pre class="text-xs text-slate-600 font-mono">Câu 1: Nội dung câu hỏi ở đây...
+A. Đáp án thứ nhất
+B. Đáp án thứ hai
+C. Đáp án thứ ba
+D. Đáp án thứ tư
+Đáp án: A</pre>
+                    </div>
+
+                    <button onclick="uploadWordBank()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl font-bold text-sm transition shadow-sm">Xử Lý Word & Lưu Ngân Hàng Đề</button>
                 </div>
             </div>
             
@@ -292,6 +345,27 @@
             });
         }
 
+        // CHỨC NĂNG ĐĂNG NHẬP BẰNG EMAIL/PASSWORD MỚI (Dành cho giao diện ảnh 1)
+        async function loginWithEmail() {
+            if (!supabaseClient) return;
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            if(!email || !password) {
+                alert("Vui lòng nhập đầy đủ Email và Mật khẩu!");
+                return;
+            }
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+
+            if (error) {
+                alert("Đăng nhập thất bại: " + error.message);
+            }
+        }
+
         async function handleLogout() {
             if(supabaseClient) await supabaseClient.auth.signOut();
         }
@@ -330,13 +404,18 @@
             document.querySelectorAll('.teacher-tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`teacher-content-${tab}`).classList.remove('hidden');
             
-            ['rooms', 'banks', 'results', 'admin'].forEach(t => {
+            ['rooms', 'banks', 'word', 'results', 'admin'].forEach(t => {
                 let btn = document.getElementById(`t-tab-${t}`);
                 if(btn) {
                     if (t === 'admin') {
                         btn.className = (tab === 'admin') 
                             ? "px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white flex items-center gap-1.5 shadow-sm"
                             : "px-4 py-2 rounded-xl text-sm font-bold bg-red-100 text-red-600 border border-red-200 flex items-center gap-1.5";
+                    } else if (t === 'word') {
+                        // Nút Word có màu xanh đặc biệt để nổi bật
+                         btn.className = (tab === t)
+                            ? "px-4 py-2 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-sm flex items-center gap-1"
+                            : "px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 transition flex items-center gap-1";
                     } else {
                         btn.className = (tab === t)
                             ? "px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm"
@@ -346,12 +425,108 @@
             });
 
             if(tab === 'rooms') loadTeacherRoomsAndBanks();
-            if(tab === 'banks') loadQuestionBanks();
+            if(tab === 'banks' || tab === 'word') loadQuestionBanks();
             if(tab === 'results') loadExamResults();
             if(tab === 'admin' && userRole === 'admin') loadAdminUsers();
         }
 
-        // ================= TEACHER: QUESTION BANKS =================
+        // ================= TÍCH HỢP CHỨC NĂNG XỬ LÝ WORD =================
+        async function uploadWordBank() {
+            const title = document.getElementById('word-title-input').value.trim();
+            const subject = document.getElementById('word-subject-input').value.trim();
+            const fileInput = document.getElementById('word-file-input').files[0];
+
+            if (!title || !fileInput) {
+                alert("Vui lòng nhập tên bộ đề và chọn file Word (.docx)!");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const arrayBuffer = event.target.result;
+                // Sử dụng mammoth để trích xuất chữ
+                mammoth.extractRawText({arrayBuffer: arrayBuffer})
+                    .then(async function(result) {
+                        const text = result.value;
+                        const questionsData = parseWordTextToQuestions(text);
+                        
+                        if(questionsData.length === 0) {
+                            alert("Không tìm thấy câu hỏi nào hợp lệ. Vui lòng kiểm tra lại định dạng file Word theo hướng dẫn.");
+                            return;
+                        }
+
+                        // Lưu vào DB tương tự như hàm Excel
+                        try {
+                            const { data: bankData, error: bankErr } = await supabaseClient
+                                .from('question_banks')
+                                .insert([{ title, subject }])
+                                .select()
+                                .single();
+
+                            if (bankErr) throw bankErr;
+                            const bankId = bankData.id;
+
+                            // Thêm BankID vào các object câu hỏi
+                            const finalQuestions = questionsData.map(q => ({...q, bank_id: bankId}));
+
+                            const { error: qErr } = await supabaseClient.from('questions').insert(finalQuestions);
+                            if (qErr) throw qErr;
+
+                            alert(`Thành công! Đã xử lý và lưu ${finalQuestions.length} câu hỏi vào ngân hàng đề.`);
+                            document.getElementById('word-title-input').value = '';
+                            document.getElementById('word-subject-input').value = '';
+                            document.getElementById('word-file-input').value = '';
+                            
+                            // Chuyển về tab quản lý phòng thi để xem thành quả
+                            switchTeacherTab('rooms');
+                        } catch (err) {
+                            alert("Lỗi lưu dữ liệu: " + err.message);
+                        }
+                    })
+                    .catch(function(err) {
+                        alert("Lỗi đọc file Word: " + err.message);
+                    });
+            };
+            reader.readAsArrayBuffer(fileInput);
+        }
+
+        // Hàm bóc tách Regex cho văn bản Word
+        function parseWordTextToQuestions(text) {
+            let questions = [];
+            
+            // Chia văn bản dựa trên từ khóa "Câu X:" hoặc "Câu X."
+            const parts = text.split(/(?=Câu\s+\d+[:\.])/i);
+            
+            parts.forEach(part => {
+                if(part.trim().toLowerCase().startsWith('câu')) {
+                    let qText = "", optA = "", optB = "", optC = "", optD = "", correct = "";
+                    
+                    // Tìm nội dung từng phần bằng Regex
+                    const questionMatch = part.match(/Câu\s+\d+[:\.](.*?)(?=A\.|B\.|C\.|D\.|Đáp án)/is);
+                    const aMatch = part.match(/A\.(.*?)(?=B\.|C\.|D\.|Đáp án)/is);
+                    const bMatch = part.match(/B\.(.*?)(?=C\.|D\.|Đáp án)/is);
+                    const cMatch = part.match(/C\.(.*?)(?=D\.|Đáp án)/is);
+                    const dMatch = part.match(/D\.(.*?)(?=Đáp án)/is);
+                    const ansMatch = part.match(/Đáp án[:\s]+([A-D])/i);
+
+                    if(questionMatch && aMatch && bMatch && cMatch && dMatch && ansMatch) {
+                        questions.push({
+                            question_text: questionMatch[1].trim(),
+                            option_a: aMatch[1].trim(),
+                            option_b: bMatch[1].trim(),
+                            option_c: cMatch[1].trim(),
+                            option_d: dMatch[1].trim(),
+                            correct_answer: ansMatch[1].trim().toUpperCase()
+                        });
+                    }
+                }
+            });
+
+            return questions;
+        }
+
+
+        // ================= TEACHER: EXCEL QUESTION BANKS =================
         async function uploadQuestionBank() {
             const title = document.getElementById('bank-title-input').value.trim();
             const subject = document.getElementById('bank-subject-input').value.trim();
@@ -370,7 +545,6 @@
                     const sheetName = workbook.SheetNames[0];
                     const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
 
-                    // Tạo bộ đề mới
                     const { data: bankData, error: bankErr } = await supabaseClient
                         .from('question_banks')
                         .insert([{ title, subject }])
