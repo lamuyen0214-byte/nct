@@ -106,7 +106,7 @@
             </div>
         </div>
 
-        <!-- VIEW: LOGIN GIÁO VIÊN ĐÃ ĐƯỢC LÀM LẠI THEO ẢNH -->
+        <!-- VIEW: LOGIN GIÁO VIÊN -->
         <div id="view-login" class="view-section hidden max-w-md mx-auto mt-10">
             <div class="bg-white p-8 rounded-xl shadow-[0_4px_20px_rgba(0,0,0,0.05)] border border-slate-100">
                 <h2 class="text-3xl font-bold text-blue-600 text-center mb-2">Đăng nhập hệ thống</h2>
@@ -157,7 +157,6 @@
                 <button onclick="switchTeacherTab('rooms')" id="t-tab-rooms" class="px-4 py-2 rounded-xl text-sm font-bold bg-indigo-600 text-white shadow-sm">Quản lý Phòng Thi</button>
                 <button onclick="switchTeacherTab('banks')" id="t-tab-banks" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Ngân hàng C.Hỏi (Excel)</button>
                 
-                <!-- NÚT TÍCH HỢP CHỨC NĂNG NHẬP WORD -->
                 <button onclick="switchTeacherTab('word')" id="t-tab-word" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 shadow-sm transition flex items-center gap-1"><i data-lucide="file-text" class="w-4 h-4"></i> Nhập Đề Từ Word</button>
                 
                 <button onclick="switchTeacherTab('results')" id="t-tab-results" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-200 transition">Kết quả</button>
@@ -166,7 +165,6 @@
 
             <!-- TAB 1: PHÒNG THI -->
             <div id="teacher-content-rooms" class="teacher-tab-content space-y-6">
-                <!-- Nội dung quản lý phòng thi giữ nguyên như cũ -->
                 <div class="bg-white p-6 rounded-2xl border shadow-sm">
                     <h3 class="font-bold text-lg mb-4 text-slate-900">Tạo Phòng Thi Mới</h3>
                     <div class="grid sm:grid-cols-4 gap-4">
@@ -213,11 +211,11 @@
                 </div>
             </div>
 
-            <!-- TAB TÍCH HỢP: NHẬP ĐỀ TỪ WORD -->
+            <!-- TAB 3: NHẬP ĐỀ TỪ WORD -->
             <div id="teacher-content-word" class="teacher-tab-content space-y-6 hidden">
                 <div class="bg-white p-6 rounded-2xl border border-blue-200 shadow-sm">
                     <h3 class="font-bold text-lg mb-2 text-blue-700 flex items-center gap-2"><i data-lucide="file-text"></i> Tự Động Sinh Đề Từ File Word (.docx)</h3>
-                    <p class="text-sm text-slate-600 mb-6">Hệ thống sẽ đọc file Word, phân tích câu hỏi và tự động chuyển vào ngân hàng đề thi. Không cần qua bước tạo Excel thủ công.</p>
+                    <p class="text-sm text-slate-600 mb-6">Hệ thống có khả năng bỏ qua tiêu đề rác, lời dẫn và các câu tự luận. Chỉ bóc tách những khối text có dạng "Câu X" và chứa đủ 4 phương án kèm đáp án đúng.</p>
                     
                     <div class="grid sm:grid-cols-3 gap-4 mb-4">
                         <input type="text" id="word-title-input" placeholder="Tên bộ đề mới (VD: Kiểm tra 15p)" class="px-4 py-2.5 border rounded-xl text-sm">
@@ -239,7 +237,7 @@ D. Đáp án thứ tư
                 </div>
             </div>
             
-            <!-- TAB 3: KẾT QUẢ -->
+            <!-- TAB 4: KẾT QUẢ -->
             <div id="teacher-content-results" class="teacher-tab-content space-y-6 hidden">
                 <div class="bg-white p-6 rounded-2xl border shadow-sm flex justify-between items-center">
                     <div>
@@ -258,7 +256,7 @@ D. Đáp án thứ tư
                 </div>
             </div>
 
-            <!-- TAB 4: ADMIN USER MANAGEMENT -->
+            <!-- TAB 5: ADMIN USER MANAGEMENT -->
             <div id="teacher-content-admin" class="teacher-tab-content space-y-4 hidden">
                 <h3 class="text-lg font-bold text-slate-800">Quản lý tài khoản Giáo viên</h3>
                 <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
@@ -345,7 +343,6 @@ D. Đáp án thứ tư
             });
         }
 
-        // CHỨC NĂNG ĐĂNG NHẬP BẰNG EMAIL/PASSWORD MỚI (Dành cho giao diện ảnh 1)
         async function loginWithEmail() {
             if (!supabaseClient) return;
             const email = document.getElementById('login-email').value.trim();
@@ -412,7 +409,6 @@ D. Đáp án thứ tư
                             ? "px-4 py-2 rounded-xl text-sm font-bold bg-red-600 text-white flex items-center gap-1.5 shadow-sm"
                             : "px-4 py-2 rounded-xl text-sm font-bold bg-red-100 text-red-600 border border-red-200 flex items-center gap-1.5";
                     } else if (t === 'word') {
-                        // Nút Word có màu xanh đặc biệt để nổi bật
                          btn.className = (tab === t)
                             ? "px-4 py-2 rounded-xl text-sm font-bold bg-blue-700 text-white shadow-sm flex items-center gap-1"
                             : "px-4 py-2 rounded-xl text-sm font-semibold text-white bg-blue-500 hover:bg-blue-600 transition flex items-center gap-1";
@@ -430,7 +426,7 @@ D. Đáp án thứ tư
             if(tab === 'admin' && userRole === 'admin') loadAdminUsers();
         }
 
-        // ================= TÍCH HỢP CHỨC NĂNG XỬ LÝ WORD =================
+        // ================= CHỨC NĂNG XỬ LÝ WORD THÔNG MINH =================
         async function uploadWordBank() {
             const title = document.getElementById('word-title-input').value.trim();
             const subject = document.getElementById('word-subject-input').value.trim();
@@ -444,18 +440,16 @@ D. Đáp án thứ tư
             const reader = new FileReader();
             reader.onload = function(event) {
                 const arrayBuffer = event.target.result;
-                // Sử dụng mammoth để trích xuất chữ
                 mammoth.extractRawText({arrayBuffer: arrayBuffer})
                     .then(async function(result) {
                         const text = result.value;
                         const questionsData = parseWordTextToQuestions(text);
                         
                         if(questionsData.length === 0) {
-                            alert("Không tìm thấy câu hỏi nào hợp lệ. Vui lòng kiểm tra lại định dạng file Word theo hướng dẫn.");
+                            alert("Không tìm thấy câu hỏi trắc nghiệm nào hợp lệ. Hệ thống đã tự động lọc bỏ các câu tự luận và tiêu đề rác. Vui lòng kiểm tra lại định dạng file Word.");
                             return;
                         }
 
-                        // Lưu vào DB tương tự như hàm Excel
                         try {
                             const { data: bankData, error: bankErr } = await supabaseClient
                                 .from('question_banks')
@@ -466,18 +460,16 @@ D. Đáp án thứ tư
                             if (bankErr) throw bankErr;
                             const bankId = bankData.id;
 
-                            // Thêm BankID vào các object câu hỏi
                             const finalQuestions = questionsData.map(q => ({...q, bank_id: bankId}));
 
                             const { error: qErr } = await supabaseClient.from('questions').insert(finalQuestions);
                             if (qErr) throw qErr;
 
-                            alert(`Thành công! Đã xử lý và lưu ${finalQuestions.length} câu hỏi vào ngân hàng đề.`);
+                            alert(`Thành công! Đã lọc rác và lưu ${finalQuestions.length} câu hỏi trắc nghiệm vào ngân hàng đề.`);
                             document.getElementById('word-title-input').value = '';
                             document.getElementById('word-subject-input').value = '';
                             document.getElementById('word-file-input').value = '';
                             
-                            // Chuyển về tab quản lý phòng thi để xem thành quả
                             switchTeacherTab('rooms');
                         } catch (err) {
                             alert("Lỗi lưu dữ liệu: " + err.message);
@@ -490,33 +482,31 @@ D. Đáp án thứ tư
             reader.readAsArrayBuffer(fileInput);
         }
 
-        // Hàm bóc tách Regex cho văn bản Word
+        // Thuật toán bóc tách Word thông minh đã được cải tiến
         function parseWordTextToQuestions(text) {
             let questions = [];
-            
-            // Chia văn bản dựa trên từ khóa "Câu X:" hoặc "Câu X."
-            const parts = text.split(/(?=Câu\s+\d+[:\.])/i);
+            const parts = text.split(/(?=(?:Câu|Bài)\s*\d+[\.\:]?)/i);
             
             parts.forEach(part => {
-                if(part.trim().toLowerCase().startsWith('câu')) {
-                    let qText = "", optA = "", optB = "", optC = "", optD = "", correct = "";
-                    
-                    // Tìm nội dung từng phần bằng Regex
-                    const questionMatch = part.match(/Câu\s+\d+[:\.](.*?)(?=A\.|B\.|C\.|D\.|Đáp án)/is);
-                    const aMatch = part.match(/A\.(.*?)(?=B\.|C\.|D\.|Đáp án)/is);
-                    const bMatch = part.match(/B\.(.*?)(?=C\.|D\.|Đáp án)/is);
-                    const cMatch = part.match(/C\.(.*?)(?=D\.|Đáp án)/is);
-                    const dMatch = part.match(/D\.(.*?)(?=Đáp án)/is);
-                    const ansMatch = part.match(/Đáp án[:\s]+([A-D])/i);
+                const partTrimmed = part.trim();
+                
+                if (/^(?:Câu|Bài)\s*\d+[\.\:]?/i.test(partTrimmed)) {
+                    const questionMatch = partTrimmed.match(/^(?:Câu|Bài)\s*\d+[\.\:]?\s*(.*?)(?=(?:\s|^)A[\.\)])/is);
+                    const aMatch = partTrimmed.match(/(?:\s|^)A[\.\)](.*?)(?=(?:\s|^)B[\.\)])/is);
+                    const bMatch = partTrimmed.match(/(?:\s|^)B[\.\)](.*?)(?=(?:\s|^)C[\.\)])/is);
+                    const cMatch = partTrimmed.match(/(?:\s|^)C[\.\)](.*?)(?=(?:\s|^)D[\.\)])/is);
+                    const dMatch = partTrimmed.match(/(?:\s|^)D[\.\)](.*?)(?=\bĐáp án|\bHướng dẫn|\bLời giải|$)/is);
+                    const ansMatch = partTrimmed.match(/\bĐáp án\s*[:\-\.]?\s*([A-D])/i);
 
-                    if(questionMatch && aMatch && bMatch && cMatch && dMatch && ansMatch) {
+                    // Chỉ đẩy vào khi ĐỦ tất cả các phần (loại bỏ tự luận, tiêu đề)
+                    if (questionMatch && aMatch && bMatch && cMatch && dMatch && ansMatch) {
                         questions.push({
-                            question_text: questionMatch[1].trim(),
-                            option_a: aMatch[1].trim(),
-                            option_b: bMatch[1].trim(),
-                            option_c: cMatch[1].trim(),
-                            option_d: dMatch[1].trim(),
-                            correct_answer: ansMatch[1].trim().toUpperCase()
+                            question_text: cleanText(questionMatch[1]),
+                            option_a: cleanText(aMatch[1]),
+                            option_b: cleanText(bMatch[1]),
+                            option_c: cleanText(cMatch[1]),
+                            option_d: cleanText(dMatch[1]),
+                            correct_answer: ansMatch[1].toUpperCase()
                         });
                     }
                 }
@@ -525,6 +515,9 @@ D. Đáp án thứ tư
             return questions;
         }
 
+        function cleanText(str) {
+            return str.replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+        }
 
         // ================= TEACHER: EXCEL QUESTION BANKS =================
         async function uploadQuestionBank() {
